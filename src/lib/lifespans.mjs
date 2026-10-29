@@ -22,7 +22,7 @@ export const lifespans={
  guinea:entry([{label:'常見壽命',value:'約 5～8 年',source:'guinea'}],'天竺鼠雖然小小一隻，也需要長期細心照顧，尤其要注意牧草、維生素 C 與日常健康觀察。',['guinea','guineaVca'],'Merck 列為 5～8 年；VCA 描述平均約 5～6 年、部分可達 8～10 年。此處是照護參考區間，不是每隻個體的平均或最長壽命。'),
  hamster:entry([{label:'常見壽命',value:'約 2～3 年',source:'hamster'}],'倉鼠的生命相對短暫，更值得我們用心提供安全、舒適且符合天性的生活環境。',['hamster']),
  parrot:entry([
-  {id:'sun',label:'小太陽鸚鵡',value:'約 18～25 年',source:'birds'},
+  {id:'sun',label:'金太陽鸚鵡',value:'約 18～25 年',source:'birds'},
   {id:'green',label:'綠頰錐尾鸚鵡',value:'約 12～15 年，部分個體可更長壽',source:'birds'},
   {id:'cockatiel',label:'玄鳳鸚鵡',value:'約 12～18 年，部分個體可更長壽',source:'birds'},
   {id:'budgie',label:'虎皮鸚鵡',value:'約 6～12 年，部分個體可更長壽',source:'birds'}
