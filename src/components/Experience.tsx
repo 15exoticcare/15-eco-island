@@ -22,6 +22,9 @@ import ExplorationCard from './ExplorationCard';
 import FieldGuide, { type FieldGuideHandle } from './FieldGuide';
 import { explorationVisitors, visitorPoint } from '@/lib/exploration.mjs';
 import type { RabbitId, RabbitLife as RabbitController } from '@/lib/rabbit-life.mjs';
+import {ArtExpansion} from './ArtExpansion';
+import DioramaExpansion from './DioramaExpansion';
+import {expansionPaths,expansionSpans,expansionWalkways,expansionFocus,expansionOffsets,expansionLabelOffsets} from '@/lib/diorama-stage3';
 import {ArtDirection} from './ArtDirection';
 import DioramaGround from './DioramaGround';
 import {dioramaPaths,dioramaSpans,dioramaWalkways,dioramaFocus,rabbitArtOffset,parrotArtOffset} from '@/lib/diorama';
@@ -30,8 +33,9 @@ type Camera = {
     y: number;
     scale: number;
 };
-export default function Experience({artPreview=false}:{artPreview?:boolean}) {return <ArtDirection.Provider value={artPreview}><ExperienceScene artPreview={artPreview}/></ArtDirection.Provider>}
-function ExperienceScene({artPreview}:{artPreview:boolean}) {
+export default function Experience({artPreview=false,artExpansion=false}:{artPreview?:boolean;artExpansion?:boolean}) {return <ArtDirection.Provider value={artPreview}><ArtExpansion.Provider value={artExpansion}><ExperienceScene artPreview={artPreview} artExpansion={artExpansion}/></ArtExpansion.Provider></ArtDirection.Provider>}
+function ExperienceScene({artPreview,artExpansion}:{artPreview:boolean;artExpansion:boolean}) {
+    const artFocus=artExpansion?expansionFocus:dioramaFocus;
     const [panel,setPanel] = useState<Panel>(null), [mobile,setMobile] = useState(false), [panelHeight,setPanelHeight] = useState(0);
     const mobileRef=useRef(false), panelRef=useRef<Panel>(null), sheet=useRef<HTMLDivElement>(null), reframe=useRef<()=>void>(()=>{});
     panelRef.current=panel;
@@ -90,7 +94,7 @@ function ExperienceScene({artPreview}:{artPreview:boolean}) {
     function openMobile(next:Panel){if(next==='guide')guide.current?.open();else{setPanel(next);setHelp(false);setExplorationMenu(false);}}
     function availableMap(){const r=viewport.current?.getBoundingClientRect();if(!r)return null;const element=panelRef.current==='guide'?document.querySelector('#field-guide'):sheet.current;
         const box=panelRef.current&&element?element.getBoundingClientRect():null;const side=!!box&&box.width<r.width*.75;const occupied=box&&!side?Math.max(0,r.bottom-box.top):0;return {r,width:side?Math.max(120,box!.left-r.left-12):r.width,top:48,height:Math.max(80,r.height-occupied-48)};}
-    function frameMobile(id:IslandId,actorSelector?:string){const area=availableMap(),i=islands.find(i=>i.id===id);if(!area||!i)return;const {r,width,top,height}=area;const art=artPreview?dioramaFocus[id]:undefined;let point=art?{x:art.x,y:art.y}:{x:i.x,y:i.y-i.width*.18};
+    function frameMobile(id:IslandId,actorSelector?:string){const area=availableMap(),i=islands.find(i=>i.id===id);if(!area||!i)return;const {r,width,top,height}=area;const art=artPreview?artFocus[id]:undefined;let point=art?{x:art.x,y:art.y}:{x:i.x,y:i.y-i.width*.18};
         let scale=Math.min((width-28)/((art?.width??i.width)*1.04),height*.88/(art?.height??i.width*.86),.85);
         if(actorSelector){const actor=document.querySelector(actorSelector),worldElement=viewport.current?.querySelector('.world');if(actor&&worldElement){const b=actor.getBoundingClientRect(),matrix=new DOMMatrix(getComputedStyle(worldElement).transform);point={x:(b.x+b.width/2-r.x-matrix.e)/matrix.a,y:(b.y+b.height/2-r.y-matrix.f)/matrix.d};scale=Math.min(1.05,Math.max(.72,(width-36)/(i.width*.78)));}}
         setSmooth(true);update({scale,x:width/2-point.x*scale,y:top+height*.5-point.y*scale});}
@@ -104,14 +108,14 @@ function ExperienceScene({artPreview}:{artPreview:boolean}) {
         setSelectedAnimal(null);
         setSelectedExploration(null);
         setExplorationMenu(false);
-    } setPanel('island'); const i = islands.find(a => a.id === id)!; if(mobileRef.current){setSelected(id);return;} if(artPreview&&dioramaFocus[id]){const r=measure(),a=dioramaFocus[id];if(!r)return;const free=r.width-660,scale=Math.min(free/(a.width*1.13),r.height*.82/a.height,1.3);setSmooth(true);update({scale,x:220+free/2-a.x*scale,y:r.height*.47-a.y*scale});setSelected(id);return;} const r = measure(); if (!r)
+    } setPanel('island'); const i = islands.find(a => a.id === id)!; if(mobileRef.current){setSelected(id);return;} if(artPreview&&artFocus[id]){const r=measure(),a=artFocus[id];if(!r)return;const free=r.width-660,scale=Math.min(free/(a.width*1.13),r.height*.82/a.height,1.3);setSmooth(true);update({scale,x:220+free/2-a.x*scale,y:r.height*.47-a.y*scale});setSelected(id);return;} const r = measure(); if (!r)
         return; const mobile = r.width < 850, left = mobile ? 0 : 220, free = r.width - left - (mobile ? 56 : 440), available = mobile ? Math.max(72, r.height - window.innerHeight * .34 - 12) : r.height * .82; const rabbitCloseup = mobile && id !== 'main', scale = rabbitCloseup ? Math.min(free / (i.width * 1.03), 1.1) : Math.min(free / (i.width * 1.13), available / (i.width * .92), 1.3), targetY = rabbitCloseup ? (id === 'rabbit' ? Math.max(62, Math.min(110, (r.height - window.innerHeight * .31 - 16) * .72)) : Math.max(98, Math.min(130, 98 + (window.innerHeight - 740) * .25))) : (mobile ? available / 2 + 8 : r.height * .47); setSmooth(true); update({ scale, x: left + free / 2 - i.x * scale, y: targetY - (i.y - i.width * .18) * scale }); setSelected(id); }
     useEffect(() => { const el = viewport.current!; const wheel = (e: WheelEvent) => { e.preventDefault(); setSmooth(false); const r = el.getBoundingClientRect(); zoom(Math.exp(-e.deltaY * .001), e.clientX - r.left, e.clientY - r.top); }; el.addEventListener('wheel', wheel, { passive: false }); return () => el.removeEventListener('wheel', wheel); }, []);
     useEffect(() => {
         let previousPhase = 'wait', arrivals = 0;
-        const controller = createPatrol(artPreview?dioramaPaths:bridgePaths, state => {
+        const controller = createPatrol(artPreview?(artExpansion?expansionPaths:dioramaPaths):bridgePaths, state => {
             if (state.phase === 'wait' && previousPhase === 'walk' && state.location !== 'main') {
-                const i = islands.find(i => i.id === state.location)!, point = { x: (state.position.x - i.x + i.width / 2) / i.width, y: (state.position.y - (artPreview?(state.location==='rabbit'?rabbitArtOffset.y:state.location==='parrot'?parrotArtOffset.y:0):0) - i.y + i.width * .64) / i.width };
+                const i = islands.find(i => i.id === state.location)!, point = { x: (state.position.x - (artExpansion?(expansionOffsets[state.location]?.x??0):0) - i.x + i.width / 2) / i.width, y: (state.position.y - (artPreview?(state.location==='rabbit'?rabbitArtOffset.y:state.location==='parrot'?parrotArtOffset.y:artExpansion?(expansionOffsets[state.location]?.y??0):0):0) - i.y + i.width * .64) / i.width };
                 if (state.location === 'rabbit')
                     rabbits.current?.noticeKeeper({ x: point.x * 1200, y: point.y * 1200 });
                 else if (habitats[state.location])
@@ -176,7 +180,7 @@ function ExperienceScene({artPreview}:{artPreview:boolean}) {
         setPanel(null);requestAnimationFrame(()=>focusExploration(id));
     } requestAnimationFrame(() => viewport.current?.focus({ preventScroll: true })); }, []);
     const current = islands.find(i => i.id === selected);
-    return <main data-art={artPreview?'diorama':'classic'} data-mobile={mobile} data-panel={panel??'none'} onKeyDown={e => { if (e.key === 'Escape') { clearPanel();
+    return <main data-art={artPreview?'diorama':'classic'} data-art-stage={artExpansion?3:1} data-mobile={mobile} data-panel={panel??'none'} onKeyDown={e => { if (e.key === 'Escape') { clearPanel();
         setSelectedRabbit(null);
         setSelectedAnimal(null);
         setExplorationMenu(false);
@@ -215,6 +219,7 @@ function ExperienceScene({artPreview}:{artPreview:boolean}) {
         gesture.current.moved = true; }} onPointerUp={e => { pointers.current.delete(e.pointerId); gesture.current.distance = 0; if(!pointers.current.size)settleHitScale(); }} onPointerCancel={e => { pointers.current.delete(e.pointerId); gesture.current.distance = 0; if(!pointers.current.size)settleHitScale(); }}>
    <div className="cloud cloud-one" ref={cloudOne}/><div className="cloud cloud-two" ref={cloudTwo}/>
    <div className={`world ${smooth ? 'smooth' : ''}`} ref={worldElement} style={{width:world.width,height:world.height}}>
+    {artPreview&&artExpansion&&<DioramaExpansion/>}
     {artPreview&&<DioramaGround/>}
     {islands.map(i => <div key={i.id} className={`island island-${i.id} ${selected === i.id ? 'selected' : ''}`} style={{ left: i.x - i.width / 2, top: i.y - i.width * .64, width: i.width }}>
      <button className="island-hit" onClick={() => { if (!gesture.current.moved)
@@ -225,11 +230,11 @@ function ExperienceScene({artPreview}:{artPreview:boolean}) {
     </div>)}
     <ExplorationScenery paused={lifePaused} active={selectedExploration} visit={explorationVisit} onSelect={selectExploration}/>
     <AnimalLife paused={lifePaused} controllerRef={animals} onSelect={selectAnimal}/>
-    <Bridges spans={artPreview?dioramaSpans:undefined}/><Walkways routes={artPreview?dioramaWalkways:undefined}/><LiveCaretaker ref={caretaker}/><Bridges front spans={artPreview?dioramaSpans:undefined}/>
+    <Bridges spans={artPreview?(artExpansion?expansionSpans:dioramaSpans):undefined}/><Walkways routes={artPreview?(artExpansion?expansionWalkways:dioramaWalkways):undefined}/><LiveCaretaker ref={caretaker}/><Bridges front spans={artPreview?(artExpansion?expansionSpans:dioramaSpans):undefined}/>
     <div className="world-note">一座小島，一種專屬的溫柔。</div>
    </div>
   </div>
-  <div className="desktop-island-labels"><IslandLabels camera={camera} viewport={viewportSize} selected={selected} smooth={smooth} onSelect={focus}/></div>
+  <div className="desktop-island-labels"><IslandLabels offsets={artExpansion?expansionLabelOffsets:undefined} spans={artExpansion?expansionSpans:undefined} camera={camera} viewport={viewportSize} selected={selected} smooth={smooth} onSelect={focus}/></div>
   <div className="map-tools" aria-label="地圖控制"><button onClick={() => { setSmooth(true); zoom(1.25); }} aria-label="放大">＋</button><span>{Math.round(camera.scale * 100)}%</span><button onClick={() => { setSmooth(true); zoom(.8); }} aria-label="縮小">−</button><div /><button onClick={() => { clearPanel(); fit(true); setSelectedExploration(null); setExplorationMenu(false); setSelected(null); setSelectedRabbit(null); setSelectedAnimal(null); }} aria-label="返回全景">⌖</button><button onClick={() => {setPanel(null);setHelp(!help);}} aria-label="操作說明">?</button><button className="motion-toggle" onClick={() => setLifePaused(!lifePaused)} aria-label={lifePaused ? '播放環境微動畫' : '暫停環境微動畫'} aria-pressed={lifePaused}>{lifePaused ? '▷' : 'Ⅱ'}</button><button className="exploration-tool" aria-label="尋找周邊小訪客" aria-expanded={explorationMenu} aria-controls="exploration-directory" onClick={() => {setPanel(null);setExplorationMenu(!explorationMenu);}}>✧</button><FieldGuide ref={guide} onNavigate={navigateGuide} open={panel==='guide'} onOpenChange={changeGuide} showReward={!mobile||!panel}/></div>
   {explorationMenu && <nav id="exploration-directory" className="exploration-directory" aria-label="周邊生態探索"><strong>林間的小小訪客</strong><p>在島外停一停，發現自然裡的細節。</p>{explorationVisitors.map(p => <button key={p.id} onClick={() => selectExploration(p.id)}>{p.name}<small>{p.setting} ↗</small></button>)}</nav>}
   {help && <div className="help">滑鼠拖曳／手機單指平移<br />滾輪／雙指縮放<br />點選島嶼探索，按「巡視」讓保母出發<br />鍵盤：方向鍵移動、＋／− 縮放、Home 全景</div>}

@@ -4,6 +4,7 @@ import {createPortal} from 'react-dom';
 import {createGuideStore,guideComplete,guideEntries,guideStorageKey,type GuideEntry,type GuideState} from '@/lib/field-guide.mjs';
 import {explorationReviewed} from '@/lib/exploration.mjs';
 import LifespanSection from './LifespanSection';
+import {useArtExpansion} from './ArtExpansion';
 import {useDiorama} from './ArtDirection';
 import {assetUrl} from '@/lib/public-assets.mjs';
 
@@ -11,7 +12,9 @@ export type FieldGuideHandle={discover:(id:string)=>void;open:()=>void;close:()=
 type Props={onNavigate:(id:string,group:'hotel'|'visitor')=>void;open?:boolean;onOpenChange?:(open:boolean)=>void;showReward?:boolean};
 
 function Portrait({entry,locked=false}:{entry:GuideEntry;locked?:boolean}){
+ const expansion=useArtExpansion(),expansionPortrait=expansion?({guinea:'guinea-1',ferret:'ferret-1',meerkat:'meerkat-1'} as Record<string,string>)[entry.id]:undefined;
  const diorama=useDiorama(),newPortrait=diorama&&(entry.id==='rabbit'||entry.id==='parrot');
+ if(expansionPortrait)return <span className={`guide-portrait ${locked?'guide-silhouette':''}`} aria-hidden="true"><svg viewBox="0 0 192 192" overflow="hidden"><image href={assetUrl(`/assets/diorama-stage3/${expansionPortrait}.webp`)} width="768" height="768"/></svg></span>;
  if(newPortrait){const cell=entry.id==='rabbit'?256:192;return <span className={`guide-portrait ${locked?'guide-silhouette':''}`} aria-hidden="true"><svg viewBox={`0 0 ${cell} ${cell}`} overflow="hidden"><image href={assetUrl(`/assets/diorama-v1/${entry.id==='rabbit'?'white':'sun'}.webp`)} width={cell*4} height={cell*(entry.id==='rabbit'?6:4)}/></svg></span>}
  return <span className={`guide-portrait ${locked?'guide-silhouette':''}`} aria-hidden="true">
   {entry.atlas?<svg viewBox="0 0 256 256"><svg width="256" height="256" overflow="hidden"><image href={entry.image} width="512" height="256"/></svg></svg>:<img src={entry.image} alt="" draggable={false}/>}

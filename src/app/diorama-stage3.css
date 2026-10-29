@@ -1,0 +1,13 @@
+/* Only the stage-three route opts in. Approved v1 artwork and offsets stay untouched. */
+main[data-art-stage="3"] .diorama-expansion{position:absolute;pointer-events:none;user-select:none;display:block}
+main[data-art-stage="3"] :is(.island-guinea,.island-ferret,.island-meerkat) .island-art{opacity:0}
+main[data-art-stage="3"] :is(.animal-habitat-guinea,.animal-habitat-ferret,.animal-habitat-meerkat) .animal-scenery-front{display:none}
+main[data-art-stage="3"] :is(.island-guinea,.animal-habitat-guinea){translate:-150px -135px}
+main[data-art-stage="3"] :is(.island-meerkat,.animal-habitat-meerkat){translate:-210px -30px}
+main[data-art-stage="3"] [data-animal="ferret-1"]{translate:37px -5px}
+main[data-art-stage="3"] [data-animal="ferret-2"]{translate:24px -16px}
+main[data-art-stage="3"] [data-animal="ferret-3"]{translate:28px -22px}
+main[data-art-stage="3"] [data-animal="meerkat-1"]{translate:45px -15px}
+main[data-art-stage="3"] [data-animal="meerkat-2"]{translate:-20px 10px}
+main[data-art-stage="3"] [data-animal="meerkat-3"]{translate:-45px -19px}
+main[data-art-stage="3"] .intro{width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
