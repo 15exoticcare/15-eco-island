@@ -1,0 +1,40 @@
+/* Only the stage-three route opts in. Approved v1 artwork and offsets stay untouched. */
+main[data-art-stage="4"] .diorama-expansion{position:absolute;pointer-events:none;user-select:none;display:block}
+main[data-art-stage="4"] :is(.island-guinea,.island-ferret,.island-meerkat) .island-art{opacity:0}
+main[data-art-stage="4"] :is(.animal-habitat-guinea,.animal-habitat-ferret,.animal-habitat-meerkat) .animal-scenery-front{display:none}
+main[data-art-stage="4"] :is(.island-guinea,.animal-habitat-guinea){translate:-150px -135px}
+main[data-art-stage="4"] :is(.island-meerkat,.animal-habitat-meerkat){translate:-210px -30px}
+main[data-art-stage="4"] [data-animal="ferret-1"]{translate:37px -5px}
+main[data-art-stage="4"] [data-animal="ferret-2"]{translate:24px -16px}
+main[data-art-stage="4"] [data-animal="ferret-3"]{translate:28px -22px}
+main[data-art-stage="4"] [data-animal="meerkat-1"]{translate:45px -15px}
+main[data-art-stage="4"] [data-animal="meerkat-2"]{translate:-20px 10px}
+main[data-art-stage="4"] [data-animal="meerkat-3"]{translate:-45px -19px}
+main[data-art-stage="4"] .intro{width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* Four new terrain regions only. No per-frame transforms, GPU hints or filters. */
+main[data-art-stage="4"] .diorama-final{position:absolute;display:block;pointer-events:none;user-select:none}
+main[data-art-stage="4"] :is(.island-hamster,.island-hedgehog,.island-chinchilla,.island-glider) .island-art{opacity:0}
+main[data-art-stage="4"] :is(.animal-habitat-hamster,.animal-habitat-hedgehog,.animal-habitat-chinchilla,.animal-habitat-glider) .animal-scenery-front{display:none}
+main[data-art-stage="4"] :is(.island-hamster,.animal-habitat-hamster){translate:100px 85px}
+main[data-art-stage="4"] :is(.island-hedgehog,.animal-habitat-hedgehog){translate:100px 90px}
+main[data-art-stage="4"] :is(.island-chinchilla,.animal-habitat-chinchilla){translate:-400px 160px}
+main[data-art-stage="4"] :is(.island-glider,.animal-habitat-glider){translate:-110px 120px}
+main[data-art-stage="4"] [data-animal="hamster-1"]{translate:-62px 12px}
+main[data-art-stage="4"] [data-animal="hamster-2"]{translate:12px 17px}
+main[data-art-stage="4"] [data-animal="hamster-3"]{translate:116px 17px}
+main[data-art-stage="4"] [data-animal="hamster-4"]{translate:146px -3px}
+main[data-art-stage="4"] [data-animal="hedgehog-1"]{translate:-49px -6px}
+main[data-art-stage="4"] [data-animal="hedgehog-2"]{translate:-3px 11px}
+main[data-art-stage="4"] [data-animal="hedgehog-3"]{translate:71px 7px}
+main[data-art-stage="4"] [data-animal="chinchilla-1"]{translate:-56px 5px}
+main[data-art-stage="4"] [data-animal="chinchilla-2"]{translate:-58px 2px}
+main[data-art-stage="4"] [data-animal="chinchilla-3"]{translate:-83px -11px}
+main[data-art-stage="4"] :is([data-animal="glider-1"],[data-support="glider-1"]){translate:-60px -32px}
+main[data-art-stage="4"] :is([data-animal="glider-2"],[data-support="glider-2"]){translate:-107px -56px}
+main[data-art-stage="4"] :is([data-animal="glider-3"],[data-support="glider-3"]){translate:-79px -32px}
+main[data-art-stage="4"] .animal-habitat-hamster .private-room-mark{display:none}
+main[data-art-stage="4"] .island-hamster{left:700px!important;top:1230px!important;width:720px!important}
+main[data-art-stage="4"] .island-hedgehog{left:1550px!important;top:1240px!important;width:650px!important}
+main[data-art-stage="4"] .island-chinchilla{left:1100px!important;top:100px!important;width:520px!important}
+main[data-art-stage="4"] .island-glider{left:1850px!important;top:150px!important;width:560px!important}

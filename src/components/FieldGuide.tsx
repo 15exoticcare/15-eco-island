@@ -5,6 +5,7 @@ import {createGuideStore,guideComplete,guideEntries,guideStorageKey,type GuideEn
 import {explorationReviewed} from '@/lib/exploration.mjs';
 import LifespanSection from './LifespanSection';
 import {useArtExpansion} from './ArtExpansion';
+import {useArtFinal} from './ArtFinal';
 import {useDiorama} from './ArtDirection';
 import {assetUrl} from '@/lib/public-assets.mjs';
 
@@ -12,8 +13,10 @@ export type FieldGuideHandle={discover:(id:string)=>void;open:()=>void;close:()=
 type Props={onNavigate:(id:string,group:'hotel'|'visitor')=>void;open?:boolean;onOpenChange?:(open:boolean)=>void;showReward?:boolean};
 
 function Portrait({entry,locked=false}:{entry:GuideEntry;locked?:boolean}){
- const expansion=useArtExpansion(),expansionPortrait=expansion?({guinea:'guinea-1',ferret:'ferret-1',meerkat:'meerkat-1'} as Record<string,string>)[entry.id]:undefined;
- const diorama=useDiorama(),newPortrait=diorama&&(entry.id==='rabbit'||entry.id==='parrot');
+ const final=useArtFinal(),expansion=useArtExpansion(),diorama=useDiorama(),finalPortrait=final&&['hamster','hedgehog','chinchilla','glider'].includes(entry.id);
+ if(finalPortrait)return <span className={`guide-portrait ${locked?'guide-silhouette':''}`} aria-hidden="true"><svg viewBox="0 0 192 192" overflow="hidden"><image href={assetUrl(`/assets/diorama-stage4/${entry.id}-1.webp`)} width="768" height="768"/></svg></span>;
+ const expansionPortrait=expansion?({guinea:'guinea-1',ferret:'ferret-1',meerkat:'meerkat-1'} as Record<string,string>)[entry.id]:undefined;
+ const newPortrait=diorama&&(entry.id==='rabbit'||entry.id==='parrot');
  if(expansionPortrait)return <span className={`guide-portrait ${locked?'guide-silhouette':''}`} aria-hidden="true"><svg viewBox="0 0 192 192" overflow="hidden"><image href={assetUrl(`/assets/diorama-stage3/${expansionPortrait}.webp`)} width="768" height="768"/></svg></span>;
  if(newPortrait){const cell=entry.id==='rabbit'?256:192;return <span className={`guide-portrait ${locked?'guide-silhouette':''}`} aria-hidden="true"><svg viewBox={`0 0 ${cell} ${cell}`} overflow="hidden"><image href={assetUrl(`/assets/diorama-v1/${entry.id==='rabbit'?'white':'sun'}.webp`)} width={cell*4} height={cell*(entry.id==='rabbit'?6:4)}/></svg></span>}
  return <span className={`guide-portrait ${locked?'guide-silhouette':''}`} aria-hidden="true">

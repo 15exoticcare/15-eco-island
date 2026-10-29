@@ -3,25 +3,25 @@ import {pathLength,roundRoute} from './landscape.mjs';
 import {gaitFrame,sampleRoute} from './animation.mjs';
 
 // Visit nearby branches using actual authored roads, rather than straight-line proximity.
-export function buildPatrolOrder(paths){
+export function buildPatrolOrder(paths,route=findRoute){
  const remaining=new Set(Object.keys(paths)),order=[];
  let from='main';
  while(remaining.size){
   let next,best=Infinity;
-  for(const id of remaining){const length=pathLength(findRoute(from,id,paths));if(length<best){best=length;next=id;}}
+  for(const id of remaining){const length=pathLength(route(from,id,paths));if(length<best){best=length;next=id;}}
   order.push(next);remaining.delete(next);from=next;
  }
  return [...order,'main'];
 }
 
-export function createPatrol(paths,onUpdate){
- const order=buildPatrolOrder(paths),home=Object.values(paths)[0][0];
+export function createPatrol(paths,onUpdate,route=findRoute){
+ const order=buildPatrolOrder(paths,route),home=Object.values(paths)[0][0];
  let state={location:'main',target:null,phase:'wait',position:{...home},distance:0,direction:'front',automatic:true,paused:false,pending:null};
  let index=0,remaining=0,path=[],total=0;
  const snapshot=()=>({...state,position:{...state.position},nextStop:state.pending??(state.phase==='walk'?state.target:order[index])});
  const emit=()=>onUpdate(snapshot());
  function depart(id,automatic){
-  path=roundRoute(findRoute(state.location,id,paths));total=pathLength(path);
+  path=roundRoute(route(state.location,id,paths));total=pathLength(path);
   state={...state,target:id,phase:'walk',distance:0,automatic};emit();
  }
  function dispatchManual(){
