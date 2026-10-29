@@ -1,0 +1,13 @@
+/* Opt-in prototype only: the published/default map stays unchanged. */
+main[data-art="diorama"] .diorama-mainland{position:absolute;display:block;pointer-events:none;user-select:none}
+main[data-art="diorama"] .island-main .island-art,main[data-art="diorama"] .island-rabbit .island-art,main[data-art="diorama"] .island-parrot .island-art{opacity:0}
+main[data-art="diorama"] .island-main .building-sign,main[data-art="diorama"] .rabbit-scenery-occluder{display:none}
+main[data-art="diorama"] .rabbit-life{translate:0 50px}
+main[data-art="diorama"] .island-main .island-hit{top:-100px;position:relative}
+main[data-art="diorama"] .animal-habitat-parrot .animal-support{display:none}
+main[data-art="diorama"] [data-animal="sun"]{translate:4px -7px}
+main[data-art="diorama"] [data-animal="green"]{translate:33px -3px}
+main[data-art="diorama"] [data-animal="cockatiel"]{translate:48px -4px}
+main[data-art="diorama"] [data-animal="budgie"]{translate:105px -33px}
+.diorama-brand{position:absolute;left:1478px;top:849px;width:92px;height:43px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;background:#f4ede0;border:2px solid #bca68b;border-radius:5px;pointer-events:none;z-index:6}
+.diorama-brand img{width:34px;height:34px;border-radius:3px}.diorama-brand span{font:19px serif;color:#7e7264}.diorama-brand small{display:block;font:6px sans-serif;white-space:nowrap}

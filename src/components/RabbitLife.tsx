@@ -1,13 +1,15 @@
 import AtlasFrames from './AtlasFrames';
+import {useDiorama} from './ArtDirection';
 import {assetUrl} from '../lib/public-assets.mjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createRabbitLife, createRabbitLoop, rabbitActions, rabbitProfiles, type RabbitId, type RabbitLife as Life, type RabbitView } from '@/lib/rabbit-life.mjs';
 export function RabbitSprite({ rabbit: r }: {
     rabbit: RabbitView;
 }) {
+    const diorama=useDiorama();
     return <svg className="rabbit-sprite" viewBox="0 0 256 256" aria-hidden="true" style={{ transform: r.facing === 'right' ? 'scaleX(-1)' : undefined }}>
   <defs><clipPath id={`rabbit-cell-${r.id}`}><rect width="256" height="256"/></clipPath></defs>
-  <g clipPath={`url(#rabbit-cell-${r.id})`}><AtlasFrames src={assetUrl(`/assets/rabbit-life/${r.id}.webp`)} frame={r.frame} cell={256} columns={4} width={1024} height={1536} blendMs={r.blend>0?160:0}/></g>
+  <g clipPath={`url(#rabbit-cell-${r.id})`}><AtlasFrames src={assetUrl(`/assets/${diorama?'diorama-v1':'rabbit-life'}/${r.id}.webp`)} frame={r.frame} cell={256} columns={4} width={1024} height={1536} blendMs={r.blend>0?160:0}/></g>
  </svg>;
 }
 function Rabbit({ r, onSelect }: {
