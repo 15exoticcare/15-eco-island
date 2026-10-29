@@ -3,6 +3,7 @@ import {assetUrl} from '../lib/public-assets.mjs';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { islands, destinations, bridgePaths, world, type IslandId, type Point } from '@/lib/islands';
 import { createPatrol, createPatrolLoop, type Patrol, type PatrolState } from '@/lib/patrol.mjs';
+import {MobileNavigation,MobilePanel,MobileSheetHeading,NavIcon,type Panel} from './MobileChrome';
 import { zoomAt } from '@/lib/camera.mjs';
 import { type Facing } from '@/lib/animation.mjs';
 import Caretaker from './Caretaker';
@@ -28,6 +29,9 @@ type Camera = {
     scale: number;
 };
 export default function Experience() {
+    const [panel,setPanel] = useState<Panel>(null), [mobile,setMobile] = useState(false), [panelHeight,setPanelHeight] = useState(0);
+    const mobileRef=useRef(false), panelRef=useRef<Panel>(null), sheet=useRef<HTMLDivElement>(null), reframe=useRef<()=>void>(()=>{});
+    panelRef.current=panel;
     const viewport = useRef<HTMLDivElement>(null), cameraRef = useRef<Camera>({ x: 0, y: 0, scale: 1 });
     const [camera, setCamera] = useState<Camera>(cameraRef.current), [selected, setSelected] = useState<IslandId | null>(null), [position, setPosition] = useState<Point>(destinations.main), [walking, setWalking] = useState(false), [smooth, setSmooth] = useState(false), [help, setHelp] = useState(false);
     const [direction, setDirection] = useState<Facing>('front'), [distance, setDistance] = useState(0), [observing, setObserving] = useState(false), [lifePaused, setLifePaused] = useState(false);
@@ -46,27 +50,48 @@ export default function Experience() {
     selectedRef.current = selected;
     const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
     function measure() { const r = viewport.current?.getBoundingClientRect(); if (r)
-        setViewportSize({ width: r.width, height: r.height }); return r; }
+        setViewportSize(previous=>previous.width===r.width&&previous.height===r.height?previous:{ width: r.width, height: r.height }); return r; }
     const pointers = useRef(new Map<number, Point>()), gesture = useRef({ x: 0, y: 0, distance: 0, moved: false }), cameraTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    function update(c: Camera) { cameraRef.current = c; setCamera(c); }
-    function fit() { const r = measure(); if (!r)
-        return; const s = Math.min(r.width / world.bounds.width, r.height / world.bounds.height) * .96; setSmooth(true); update({ x: r.width / 2 - world.center.x * s, y: r.height / 2 - world.center.y * s, scale: s }); }
-    useEffect(() => { fit(); const ro = new ResizeObserver(() => { if (explorationRef.current)
-        focusExploration(explorationRef.current);
-    else if (selectedRef.current)
-        focus(selectedRef.current, true);
-    else
-        fit(); }); if (viewport.current)
-        ro.observe(viewport.current); return () => { ro.disconnect(); if (cameraTimer.current)
-        clearTimeout(cameraTimer.current); }; }, []);
-    function zoom(factor: number, cx?: number, cy?: number) { const r = viewport.current?.getBoundingClientRect(); if (!r)
-        return; const c = cameraRef.current, x = cx ?? r.width / 2, y = cy ?? r.height / 2; update(zoomAt(c, factor, x, y)); }
+    function update(c: Camera) {
+        const r=viewport.current?.getBoundingClientRect();
+        if(mobileRef.current&&r){const scale=Math.max(Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.86,Math.min(1.65,c.scale));
+            c={scale,x:Math.max(r.width*.5-(world.center.x+world.bounds.width*.5)*scale,Math.min(r.width*.5-(world.center.x-world.bounds.width*.5)*scale,c.x)),y:Math.max(r.height*.5-(world.center.y+world.bounds.height*.5)*scale,Math.min(r.height*.5-(world.center.y-world.bounds.height*.5)*scale,c.y))};}
+        cameraRef.current=c;setCamera(c);
+    }
+    function fit(full=false) {const r=measure();if(!r)return;const fitted=Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.96;
+        const scale=mobileRef.current&&!full?Math.max(fitted,Math.min(.24,r.height/(world.bounds.height*.95))):fitted;
+        setSmooth(true);update({x:r.width/2-world.center.x*scale,y:r.height/2-world.center.y*scale,scale});}
+    useEffect(()=>{const query=matchMedia('(max-width:849px), (max-height:500px) and (pointer:coarse)');
+        const mode=()=>{mobileRef.current=query.matches;setMobile(query.matches);};mode();query.addEventListener('change',mode);fit();let last=viewport.current!.getBoundingClientRect();
+        let layoutFrame=0;
+        const resize=()=>{const r=measure();if(!r)return;const c=cameraRef.current;
+            if(!mobileRef.current||!['island','rabbit','animal','visitor'].includes(panelRef.current??''))update({...c,x:c.x+(r.width-last.width)/2,y:c.y+(r.height-last.height)/2});last=r;
+            // WebKit can deliver viewport and sheet geometry in different frames.
+            cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(()=>{layoutFrame=requestAnimationFrame(()=>reframe.current());});};
+        const ro=new ResizeObserver(resize);ro.observe(viewport.current!);window.addEventListener('resize',resize);window.visualViewport?.addEventListener('resize',resize);window.addEventListener('orientationchange',resize);
+        return()=>{ro.disconnect();cancelAnimationFrame(layoutFrame);query.removeEventListener('change',mode);window.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('resize',resize);window.removeEventListener('orientationchange',resize);if(cameraTimer.current)clearTimeout(cameraTimer.current);};},[]);
+    useEffect(()=>{if(!mobile)return;const element=panel==='guide'?document.querySelector('#field-guide'):sheet.current;if(!element){setPanelHeight(0);return;}
+        const ro=new ResizeObserver(()=>setPanelHeight(Math.round(element.getBoundingClientRect().height)));ro.observe(element);return()=>ro.disconnect();},[panel,mobile]);
+    function clearPanel(){const prior=panelRef.current;setPanel(null);setHelp(false);setExplorationMenu(false);setSelectedRabbit(null);setSelectedAnimal(null);setSelectedExploration(null);if(mobileRef.current)requestAnimationFrame(()=>document.querySelector<HTMLButtonElement>(`[data-mobile-nav="${prior==='patrol'?'patrol':prior==='guide'?'guide':'islands'}"]`)?.focus({preventScroll:true}));}
+    const changeGuide=useCallback((open:boolean)=>{setPanel(open?'guide':null);setHelp(false);setExplorationMenu(false);},[]);
+    function openMobile(next:Panel){if(next==='guide')guide.current?.open();else{setPanel(next);setHelp(false);setExplorationMenu(false);}}
+    function availableMap(){const r=viewport.current?.getBoundingClientRect();if(!r)return null;const element=panelRef.current==='guide'?document.querySelector('#field-guide'):sheet.current;
+        const box=panelRef.current&&element?element.getBoundingClientRect():null;const side=!!box&&box.width<r.width*.75;const occupied=box&&!side?Math.max(0,r.bottom-box.top):0;return {r,width:side?Math.max(120,box!.left-r.left-12):r.width,top:48,height:Math.max(80,r.height-occupied-48)};}
+    function frameMobile(id:IslandId,actorSelector?:string){const area=availableMap(),i=islands.find(i=>i.id===id);if(!area||!i)return;const {r,width,top,height}=area;let point={x:i.x,y:i.y-i.width*.18};
+        let scale=Math.min((width-28)/(i.width*1.04),height*.88/(i.width*.86),.85);
+        if(actorSelector){const actor=document.querySelector(actorSelector),worldElement=viewport.current?.querySelector('.world');if(actor&&worldElement){const b=actor.getBoundingClientRect(),matrix=new DOMMatrix(getComputedStyle(worldElement).transform);point={x:(b.x+b.width/2-r.x-matrix.e)/matrix.a,y:(b.y+b.height/2-r.y-matrix.f)/matrix.d};scale=Math.min(1.05,Math.max(.72,(width-36)/(i.width*.78)));}}
+        setSmooth(true);update({scale,x:width/2-point.x*scale,y:top+height*.5-point.y*scale});}
+    reframe.current=()=>{if(!mobileRef.current)return;if(panel==='visitor'&&selectedExploration)focusExploration(selectedExploration);else if(selected&&['island','rabbit','animal'].includes(panel??''))frameMobile(selected,panel==='rabbit'&&selectedRabbit?`[data-rabbit="${selectedRabbit}"]`:panel==='animal'&&selectedAnimal?`[data-animal="${selectedAnimal}"]`:undefined);};
+    useEffect(()=>{if(!mobile)return;const timer=requestAnimationFrame(()=>reframe.current());return()=>cancelAnimationFrame(timer);},[panel,panelHeight,mobile,selected,selectedRabbit,selectedAnimal,selectedExploration,viewportSize.width,viewportSize.height]);
+    function zoom(factor:number,cx?:number,cy?:number){const r=viewport.current?.getBoundingClientRect();if(!r)return;const c=cameraRef.current;
+        if(mobileRef.current)factor=Math.max(Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.86,Math.min(1.65,c.scale*factor))/c.scale;
+        update(zoomAt(c,factor,cx??r.width/2,cy??r.height/2));}
     function focus(id: IslandId, preserveRabbit = false) { if (!preserveRabbit) {
         setSelectedRabbit(null);
         setSelectedAnimal(null);
         setSelectedExploration(null);
         setExplorationMenu(false);
-    } const i = islands.find(a => a.id === id)!; const r = measure(); if (!r)
+    } setPanel('island'); const i = islands.find(a => a.id === id)!; if(mobileRef.current){setSelected(id);return;} const r = measure(); if (!r)
         return; const mobile = r.width < 850, left = mobile ? 0 : 220, free = r.width - left - (mobile ? 56 : 440), available = mobile ? Math.max(72, r.height - window.innerHeight * .34 - 12) : r.height * .82; const rabbitCloseup = mobile && id !== 'main', scale = rabbitCloseup ? Math.min(free / (i.width * 1.03), 1.1) : Math.min(free / (i.width * 1.13), available / (i.width * .92), 1.3), targetY = rabbitCloseup ? (id === 'rabbit' ? Math.max(62, Math.min(110, (r.height - window.innerHeight * .31 - 16) * .72)) : Math.max(98, Math.min(130, 98 + (window.innerHeight - 740) * .25))) : (mobile ? available / 2 + 8 : r.height * .47); setSmooth(true); update({ scale, x: left + free / 2 - i.x * scale, y: targetY - (i.y - i.width * .18) * scale }); setSelected(id); }
     useEffect(() => { const el = viewport.current!; const wheel = (e: WheelEvent) => { e.preventDefault(); setSmooth(false); const r = el.getBoundingClientRect(); zoom(Math.exp(-e.deltaY * .001), e.clientX - r.left, e.clientY - r.top); }; el.addEventListener('wheel', wheel, { passive: false }); return () => el.removeEventListener('wheel', wheel); }, []);
     useEffect(() => {
@@ -103,6 +128,7 @@ export default function Experience() {
         const controller = patrol.current;
         if (!controller || !controller.requestManual(id))
             return;
+        setPanel(null);
         // Keep the manual camera behavior; the controller queues safely when moving or paused.
         setSelectedRabbit(null);
         setSelectedAnimal(null);
@@ -112,22 +138,23 @@ export default function Experience() {
         fit();
     }
     const selectRabbit = useCallback((id: RabbitId) => { setSelectedExploration(null); setSelectedAnimal(null); rabbits.current?.react(id); if (selectedRef.current !== 'rabbit')
-        focus('rabbit'); setSelectedRabbit(id); guide.current?.discover('rabbit'); }, []);
+        focus('rabbit'); setSelectedRabbit(id); setPanel('rabbit'); guide.current?.discover('rabbit'); }, []);
     const selectAnimal = useCallback((id: string) => { setSelectedExploration(null); const p = animalProfiles.find(p => p.id === id); if (!p)
         return; animals.current?.react(id); if (selectedRef.current !== p.island)
-        focus(p.island); setSelectedRabbit(null); setSelectedAnimal(id); guide.current?.discover(p.island); }, []);
+        focus(p.island); setSelectedRabbit(null); setSelectedAnimal(id); setPanel('animal'); guide.current?.discover(p.island); }, []);
     function focusExploration(id: string) {
         const p = explorationVisitors.find(p => p.id === id);
         const r = measure();
         if (!p || !r)
             return;
-        const point = visitorPoint(p), mobile = r.width < 850, scale = mobile ? .95 : 1.15;
+        const point = visitorPoint(p), mobile = mobileRef.current, scale = mobile ? Math.min(.95,(r.width-40)/(p.size*2.5)) : 1.15;
+        const area=mobile?availableMap():null;
         setSmooth(true);
-        update({ scale, x: (mobile ? r.width * .47 : (r.width - 360) / 2) - point.x * scale, y: (mobile ? Math.max(62, (r.height - 160) / 2) : r.height * .46) - point.y * scale });
+        update({ scale, x: (mobile&&area ? area.width*.5 : (r.width - 360) / 2) - point.x * scale, y: (mobile&&area ? area.top+area.height*.5 : r.height * .46) - point.y * scale });
     }
     const selectExploration = useCallback((id: string) => { if (!explorationVisitors.some(p => p.id === id))
-        return; explorationReturn.current = document.activeElement?.getAttribute('data-exploration') ?? id; setSelected(null); setSelectedRabbit(null); setSelectedAnimal(null); setSelectedExploration(id); setExplorationVisit(n => n + 1); setExplorationMenu(false); focusExploration(id); guide.current?.discover(id); }, []);
-    function closeExploration() { const id = explorationReturn.current; setSelectedExploration(null); if (id)
+        return; explorationReturn.current = document.activeElement?.getAttribute('data-exploration') ?? id; setSelected(null); setSelectedRabbit(null); setSelectedAnimal(null); setSelectedExploration(id); setPanel('visitor'); setExplorationVisit(n => n + 1); setExplorationMenu(false); focusExploration(id); guide.current?.discover(id); }, []);
+    function closeExploration() { setPanel(null); const id = explorationReturn.current; setSelectedExploration(null); if (id)
         requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-exploration="${id}"]`)?.focus({ preventScroll: true })); }
     const navigateGuide = useCallback((id: string, group: 'hotel' | 'visitor') => { if (group === 'hotel')
         focus(id as IslandId);
@@ -137,26 +164,26 @@ export default function Experience() {
         setSelectedAnimal(null);
         setSelectedExploration(null);
         setExplorationMenu(false);
-        focusExploration(id);
+        setPanel(null);requestAnimationFrame(()=>focusExploration(id));
     } requestAnimationFrame(() => viewport.current?.focus({ preventScroll: true })); }, []);
     const current = islands.find(i => i.id === selected);
-    return <main onKeyDown={e => { if (e.key === 'Escape') {
+    return <main data-mobile={mobile} data-panel={panel??'none'} onKeyDown={e => { if (e.key === 'Escape') { clearPanel();
         setSelectedRabbit(null);
         setSelectedAnimal(null);
         setExplorationMenu(false);
         if (selectedExploration)
             closeExploration();
     } }} className={lifePaused ? 'life-paused' : ''} data-exploring={selectedExploration ? 'true' : 'false'} data-view={selected ? 'focus' : 'overview'} data-island={selected ?? 'overview'}>
-  <header className="topbar"><a className="brand" href="https://15exoticanimalhotel.com.tw/" target="_blank" rel="noreferrer"><img src={assetUrl("/assets/logo-original.jpg")} alt="壹伍原始商標"/><span>壹伍<span className="brand-sub">非犬貓旅宿</span></span></a><span className="top-caption">每一種特別，都值得被溫柔對待</span><a className="price-link" href="https://15exoticanimalhotel.com.tw/price.html" target="_blank" rel="noreferrer">了解房型／價格 <span>↗</span></a></header>
+  <header className="topbar"><a className="brand" href="https://15exoticanimalhotel.com.tw/" target="_blank" rel="noreferrer"><img src={assetUrl("/assets/logo-original.jpg")} alt="壹伍原始商標"/><span>壹伍<span className="brand-sub">非犬貓旅宿</span></span></a><span className="mobile-site-title">生態島</span><span className="top-caption">每一種特別，都值得被溫柔對待</span><a className="price-link" href="https://15exoticanimalhotel.com.tw/price.html" target="_blank" rel="noreferrer">了解房型／價格 <span>↗</span></a></header>
   <div className="intro"><div className="eyebrow"><span /> YIWU ECO ISLAND · CHAPTER 07</div><h1>壹伍生態島</h1><p>把世界放小，把照顧放大。<br />跟著保母，走進每一種特別的日常。</p><span className="review-tag">動態原型 · 步態與新製美術待審</span></div>
-  <div className="map" ref={viewport} tabIndex={0} role="region" aria-label="可拖曳縮放的生態島地圖；方向鍵移動，加減鍵縮放，Home 返回全景" onKeyDown={e => { const c = cameraRef.current; if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+  <div className="map" ref={viewport} tabIndex={0} role="region" aria-label="可拖曳縮放的生態島地圖；方向鍵移動，加減鍵縮放，Home 返回全景" onClickCapture={e=>{if(gesture.current.moved&&e.detail!==0){e.preventDefault();e.stopPropagation();}}} onKeyDown={e => { const c = cameraRef.current; if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
         e.preventDefault();
         setSmooth(false);
         update({ ...c, x: c.x + (e.key === 'ArrowLeft' ? 50 : e.key === 'ArrowRight' ? -50 : 0), y: c.y + (e.key === 'ArrowUp' ? 50 : e.key === 'ArrowDown' ? -50 : 0) });
     } if (e.key === '+' || e.key === '=')
         zoom(1.2); if (e.key === '-')
         zoom(1 / 1.2); if (e.key === 'Home') {
-        fit();
+        clearPanel(); fit(true);
         setSelectedExploration(null);
         setExplorationMenu(false);
         setSelected(null);
@@ -192,14 +219,21 @@ export default function Experience() {
     <div className="world-note">一座小島，一種專屬的溫柔。</div>
    </div>
   </div>
-  <IslandLabels camera={camera} viewport={viewportSize} selected={selected} smooth={smooth} onSelect={focus}/>
-  <div className="map-tools" aria-label="地圖控制"><button onClick={() => { setSmooth(true); zoom(1.25); }} aria-label="放大">＋</button><span>{Math.round(camera.scale * 100)}%</span><button onClick={() => { setSmooth(true); zoom(.8); }} aria-label="縮小">−</button><div /><button onClick={() => { fit(); setSelectedExploration(null); setExplorationMenu(false); setSelected(null); setSelectedRabbit(null); setSelectedAnimal(null); }} aria-label="返回全景">⌖</button><button onClick={() => setHelp(!help)} aria-label="操作說明">?</button><button className="motion-toggle" onClick={() => setLifePaused(!lifePaused)} aria-label={lifePaused ? '播放環境微動畫' : '暫停環境微動畫'} aria-pressed={lifePaused}>{lifePaused ? '▷' : 'Ⅱ'}</button><button className="exploration-tool" aria-label="尋找周邊小訪客" aria-expanded={explorationMenu} aria-controls="exploration-directory" onClick={() => setExplorationMenu(!explorationMenu)}>✧</button><FieldGuide ref={guide} onNavigate={navigateGuide}/></div>
+  <div className="desktop-island-labels"><IslandLabels camera={camera} viewport={viewportSize} selected={selected} smooth={smooth} onSelect={focus}/></div>
+  <div className="map-tools" aria-label="地圖控制"><button onClick={() => { setSmooth(true); zoom(1.25); }} aria-label="放大">＋</button><span>{Math.round(camera.scale * 100)}%</span><button onClick={() => { setSmooth(true); zoom(.8); }} aria-label="縮小">−</button><div /><button onClick={() => { clearPanel(); fit(true); setSelectedExploration(null); setExplorationMenu(false); setSelected(null); setSelectedRabbit(null); setSelectedAnimal(null); }} aria-label="返回全景">⌖</button><button onClick={() => {setPanel(null);setHelp(!help);}} aria-label="操作說明">?</button><button className="motion-toggle" onClick={() => setLifePaused(!lifePaused)} aria-label={lifePaused ? '播放環境微動畫' : '暫停環境微動畫'} aria-pressed={lifePaused}>{lifePaused ? '▷' : 'Ⅱ'}</button><button className="exploration-tool" aria-label="尋找周邊小訪客" aria-expanded={explorationMenu} aria-controls="exploration-directory" onClick={() => {setPanel(null);setExplorationMenu(!explorationMenu);}}>✧</button><FieldGuide ref={guide} onNavigate={navigateGuide} open={panel==='guide'} onOpenChange={changeGuide} showReward={!mobile||!panel}/></div>
   {explorationMenu && <nav id="exploration-directory" className="exploration-directory" aria-label="周邊生態探索"><strong>林間的小小訪客</strong><p>在島外停一停，發現自然裡的細節。</p>{explorationVisitors.map(p => <button key={p.id} onClick={() => selectExploration(p.id)}>{p.name}<small>{p.setting} ↗</small></button>)}</nav>}
   {help && <div className="help">滑鼠拖曳／手機單指平移<br />滾輪／雙指縮放<br />點選島嶼探索，按「巡視」讓保母出發<br />鍵盤：方向鍵移動、＋／− 縮放、Home 全景</div>}
-  {current && !selectedRabbit && !selectedAnimal && <IslandCard island={current} onClose={() => { setSelected(null); fit(); }} onVisit={visit}/>}
-  {selectedRabbit && <RabbitCard id={selectedRabbit} onClose={() => setSelectedRabbit(null)}/>}
-  {selectedExploration && <ExplorationCard id={selectedExploration} onClose={closeExploration}/>}
-  {selectedAnimal && <AnimalCard id={selectedAnimal} onClose={() => setSelectedAnimal(null)}/>}
+  {mobile&&<><button className="mobile-patrol-pill" aria-label="查看巡視狀態" onClick={()=>openMobile('patrol')}><span className={patrolState?.paused?'paused-dot':'patrol-dot'}/>{patrolState?.paused?'巡視已暫停':'保母巡視中'}<span aria-hidden="true">↗</span></button>
+  {!panel&&<div className="mobile-map-actions" aria-label="手機地圖工具"><button aria-label="放大地圖" onClick={()=>{setSmooth(false);zoom(1.25);}}>＋</button><button aria-label="縮小地圖" onClick={()=>{setSmooth(false);zoom(.8);}}>−</button><button aria-label="世界全景" onClick={()=>{clearPanel();setSelected(null);fit(true);}}>⌖</button><button aria-label="更多探索工具" onClick={()=>openMobile('tools')}><NavIcon kind="tools"/></button></div>}
+  <MobileNavigation panel={panel} onOpen={openMobile}/></>}
+  <div id="mobile-sheet" ref={sheet} className="mobile-sheet-host" data-empty={!panel||panel==='guide'} data-kind={panel??'none'} role={mobile&&panel&&panel!=='guide'?'dialog':undefined} aria-modal={mobile&&panel&&panel!=='guide'?'false':undefined} aria-label={mobile?'地圖探索面板':undefined}>
+  {mobile&&panel&&panel!=='guide'&&<MobileSheetHeading onClose={clearPanel}>{panel==='islands'?'十島導覽':panel==='patrol'?'保母巡視':panel==='tools'?'探索選單':panel==='visitor'?'周邊生態手札':panel==='island'?'島嶼手札':'遇見小夥伴'}</MobileSheetHeading>}
+  {current&&panel==='island'&&<IslandCard island={current} onClose={()=>{setPanel(null);setSelected(null);fit();}} onVisit={visit} onResident={id=>{if(current.id==='rabbit')selectRabbit(id as RabbitId);else selectAnimal(id);}}/>}
+  {panel==='rabbit'&&selectedRabbit&&<RabbitCard id={selectedRabbit} onClose={()=>{setSelectedRabbit(null);setPanel(mobileRef.current?null:'island');}}/>}
+  {panel==='visitor'&&selectedExploration&&<ExplorationCard id={selectedExploration} onClose={closeExploration}/>}
+  {panel==='animal'&&selectedAnimal&&<AnimalCard id={selectedAnimal} onClose={()=>{setSelectedAnimal(null);setPanel(mobileRef.current?null:'island');}}/>}
+  {mobile&&['islands','patrol','tools'].includes(panel??'')&&<MobilePanel kind={panel} state={patrolState} caption={visitCaption} paused={lifePaused} onSelect={focus} onVisit={visit} onToggle={()=>{const controller=patrol.current;if(controller)controller.setPaused(!controller.snapshot().paused);}} onMotion={()=>setLifePaused(!lifePaused)} onVisitor={selectExploration} onOverview={()=>{clearPanel();setSelected(null);fit(true);}}/>}
+  </div>
   <footer className="patrol-footer"><PatrolControls state={patrolState} caption={visitCaption} onToggle={() => { const controller = patrol.current; if (controller)
         controller.setPaused(!controller.snapshot().paused); }}/><a className="contact" href={process.env.NEXT_PUBLIC_BOOKING_URL || 'https://15exoticanimalhotel.com.tw/'} target="_blank" rel="noreferrer">{process.env.NEXT_PUBLIC_BOOKING_URL ? '住宿預約' : '聯絡壹伍／前往官網'} ↗</a></footer>
  </main>;
