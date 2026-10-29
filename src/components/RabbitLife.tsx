@@ -1,18 +1,13 @@
+import AtlasFrames from './AtlasFrames';
 import {assetUrl} from '../lib/public-assets.mjs';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createRabbitLife, createRabbitLoop, rabbitActions, rabbitProfiles, type RabbitId, type RabbitLife as Life, type RabbitView } from '@/lib/rabbit-life.mjs';
 export function RabbitSprite({ rabbit: r }: {
     rabbit: RabbitView;
 }) {
-    const [previous, setPrevious] = useState(r.frame), last = useRef(r.frame);
-    useEffect(() => { if (last.current !== r.frame) {
-        setPrevious(last.current);
-        last.current = r.frame;
-    } }, [r.frame]);
-    const image = (frame: number) => <image href={assetUrl(`/assets/rabbit-life/${r.id}.webp`)} x={-(frame % 4) * 256} y={-Math.floor(frame / 4) * 256} width="1024" height="1536"/>;
     return <svg className="rabbit-sprite" viewBox="0 0 256 256" aria-hidden="true" style={{ transform: r.facing === 'right' ? 'scaleX(-1)' : undefined }}>
   <defs><clipPath id={`rabbit-cell-${r.id}`}><rect width="256" height="256"/></clipPath></defs>
-  <g clipPath={`url(#rabbit-cell-${r.id})`}>{r.blend > 0 && previous !== r.frame && <g key={`old-${r.frame}`} className="rabbit-old-pose">{image(previous)}</g>}<g key={r.frame} className={r.blend > 0 ? 'rabbit-new-pose' : undefined}>{image(r.frame)}</g></g>
+  <g clipPath={`url(#rabbit-cell-${r.id})`}><AtlasFrames src={assetUrl(`/assets/rabbit-life/${r.id}.webp`)} frame={r.frame} cell={256} columns={4} width={1024} height={1536} blendMs={r.blend>0?160:0}/></g>
  </svg>;
 }
 function Rabbit({ r, onSelect }: {

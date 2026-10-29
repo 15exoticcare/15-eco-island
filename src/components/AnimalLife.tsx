@@ -1,3 +1,4 @@
+import AtlasFrames from './AtlasFrames';
 import {assetUrl} from '../lib/public-assets.mjs';
 import { memo, useEffect, useRef, useState, type RefObject } from 'react';
 import { islands } from '@/lib/islands';
@@ -8,19 +9,14 @@ export function AnimalSprite({ profile: p, resident: r }: {
     profile: AnimalProfile;
     resident: AnimalView;
 }) {
-    const [previous, setPrevious] = useState(r.frame), last = useRef(r.frame);
-    useEffect(() => { if (last.current !== r.frame) {
-        setPrevious(last.current);
-        last.current = r.frame;
-    } }, [r.frame]);
-    const image = (frame: number) => <image href={assetUrl(`/assets/animal-life/${r.id}.webp`)} x={-(frame % 4) * 192} y={-Math.floor(frame / 4) * 192} width="768" height="768"/>;
     if (!p.atlas.available)
         return <img className="animal-fallback" src={assetUrl(`/assets/${p.asset}.webp`)} alt="" draggable={false}/>;
     const blend = ['rest', 'observe', 'care'].includes(r.state);
     const bounds = animalBounds(p, r);
-    return <svg className="animal-life-sprite" viewBox={bounds.join(' ')} aria-hidden="true"><defs><clipPath id={`animal-cell-${r.id}`}><rect width="192" height="192"/></clipPath></defs><g transform={r.facing === 'right' ? 'translate(192 0) scale(-1 1)' : undefined} clipPath={`url(#animal-cell-${r.id})`}>{blend && previous !== r.frame && <g key={`before-${r.frame}`} className="animal-pose-out">{image(previous)}</g>}<g key={r.frame} className={blend ? 'animal-pose-in' : undefined}>{image(r.frame)}</g></g></svg>;
+    return <svg className="animal-life-sprite" viewBox={bounds.join(' ')} aria-hidden="true"><defs><clipPath id={`animal-cell-${r.id}`}><rect width="192" height="192"/></clipPath></defs><g transform={r.facing === 'right' ? 'translate(192 0) scale(-1 1)' : undefined} clipPath={`url(#animal-cell-${r.id})`}><AtlasFrames src={assetUrl(`/assets/animal-life/${r.id}.webp`)} frame={r.frame} cell={192} columns={4} width={768} height={768} blendMs={blend?150:0}/></g></svg>;
 }
-function animalBounds(p: AnimalProfile, r: AnimalView) { const b = p.atlas.bounds?.[r.frame] ?? [0, 0, 192, 192]; return [r.facing === 'right' ? 192 - b[0] - b[2] : b[0], b[1], b[2], b[3]]; }
+const fixedBounds=new Map<string,number[]>();
+function animalBounds(p: AnimalProfile, r: AnimalView) { let b=fixedBounds.get(p.id);if(!b){const frames=p.atlas.bounds??[[0,0,192,192]],x=Math.min(...frames.map(v=>v[0])),y=Math.min(...frames.map(v=>v[1]));b=[x,y,Math.max(...frames.map(v=>v[0]+v[2]))-x,Math.max(...frames.map(v=>v[1]+v[3]))-y];fixedBounds.set(p.id,b);} return [r.facing === 'right' ? 192 - b[0] - b[2] : b[0], b[1], b[2], b[3]]; }
 const Resident = memo(function Resident({ r, p, width, height, onSelect }: {
     r: AnimalView;
     p: AnimalProfile;

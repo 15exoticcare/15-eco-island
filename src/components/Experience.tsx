@@ -1,12 +1,11 @@
 'use client';
 import {assetUrl} from '../lib/public-assets.mjs';
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { islands, destinations, bridgePaths, world, type IslandId, type Point } from '@/lib/islands';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { islands, bridgePaths, world, type IslandId, type Point } from '@/lib/islands';
 import { createPatrol, createPatrolLoop, type Patrol, type PatrolState } from '@/lib/patrol.mjs';
 import {MobileNavigation,MobilePanel,MobileSheetHeading,NavIcon,type Panel} from './MobileChrome';
 import { zoomAt } from '@/lib/camera.mjs';
-import { type Facing } from '@/lib/animation.mjs';
-import Caretaker from './Caretaker';
+import {LiveCaretaker,type CaretakerHandle} from './Caretaker';
 import AnimalLife from './AnimalLife';
 import AnimalCard from './AnimalCard';
 import { animalProfiles, type AnimalLife as AnimalController } from '@/lib/animal-life.mjs';
@@ -32,9 +31,10 @@ export default function Experience() {
     const [panel,setPanel] = useState<Panel>(null), [mobile,setMobile] = useState(false), [panelHeight,setPanelHeight] = useState(0);
     const mobileRef=useRef(false), panelRef=useRef<Panel>(null), sheet=useRef<HTMLDivElement>(null), reframe=useRef<()=>void>(()=>{});
     panelRef.current=panel;
+    const worldElement=useRef<HTMLDivElement>(null),cloudOne=useRef<HTMLDivElement>(null),cloudTwo=useRef<HTMLDivElement>(null),cameraFrame=useRef<number|null>(null),caretaker=useRef<CaretakerHandle|null>(null);
     const viewport = useRef<HTMLDivElement>(null), cameraRef = useRef<Camera>({ x: 0, y: 0, scale: 1 });
-    const [camera, setCamera] = useState<Camera>(cameraRef.current), [selected, setSelected] = useState<IslandId | null>(null), [position, setPosition] = useState<Point>(destinations.main), [walking, setWalking] = useState(false), [smooth, setSmooth] = useState(false), [help, setHelp] = useState(false);
-    const [direction, setDirection] = useState<Facing>('front'), [distance, setDistance] = useState(0), [observing, setObserving] = useState(false), [lifePaused, setLifePaused] = useState(false);
+    const [camera, setCamera] = useState<Camera>(cameraRef.current), [selected, setSelected] = useState<IslandId | null>(null), [smooth, setSmooth] = useState(false), [help, setHelp] = useState(false);
+    const [lifePaused, setLifePaused] = useState(false);
     const [patrolState, setPatrolState] = useState<PatrolState | null>(null);
     const [visitCaption, setVisitCaption] = useState<string | null>(null);
     const [selectedRabbit, setSelectedRabbit] = useState<RabbitId | null>(null);
@@ -52,11 +52,20 @@ export default function Experience() {
     function measure() { const r = viewport.current?.getBoundingClientRect(); if (r)
         setViewportSize(previous=>previous.width===r.width&&previous.height===r.height?previous:{ width: r.width, height: r.height }); return r; }
     const pointers = useRef(new Map<number, Point>()), gesture = useRef({ x: 0, y: 0, distance: 0, moved: false }), cameraTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    function settleHitScale(){worldElement.current?.style.setProperty('--map-scale',String(cameraRef.current.scale));}
+    function paintCamera(){cameraFrame.current=null;const c=cameraRef.current,element=worldElement.current;if(!element)return;
+        element.style.transform=`translate(${c.x}px,${c.y}px) scale(${c.scale})`;
+        settleHitScale();if(!element.dataset.cameraReady)element.dataset.cameraReady='true';
+        if(cloudOne.current)cloudOne.current.style.transform=`translate(${c.x*.08}px,${c.y*.08}px)`;
+        if(cloudTwo.current)cloudTwo.current.style.transform=`translate(${c.x*.04}px,${c.y*.04}px)`;
+        if(!mobileRef.current)setCamera(c);
+    }
     function update(c: Camera) {
         const r=viewport.current?.getBoundingClientRect();
         if(mobileRef.current&&r){const scale=Math.max(Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.86,Math.min(1.65,c.scale));
             c={scale,x:Math.max(r.width*.5-(world.center.x+world.bounds.width*.5)*scale,Math.min(r.width*.5-(world.center.x-world.bounds.width*.5)*scale,c.x)),y:Math.max(r.height*.5-(world.center.y+world.bounds.height*.5)*scale,Math.min(r.height*.5-(world.center.y-world.bounds.height*.5)*scale,c.y))};}
-        cameraRef.current=c;setCamera(c);
+        cameraRef.current=c;
+        if(cameraFrame.current===null)cameraFrame.current=requestAnimationFrame(paintCamera);
     }
     function fit(full=false) {const r=measure();if(!r)return;const fitted=Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.96;
         const scale=mobileRef.current&&!full?Math.max(fitted,Math.min(.24,r.height/(world.bounds.height*.95))):fitted;
@@ -69,7 +78,7 @@ export default function Experience() {
             // WebKit can deliver viewport and sheet geometry in different frames.
             cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(()=>{layoutFrame=requestAnimationFrame(()=>reframe.current());});};
         const ro=new ResizeObserver(resize);ro.observe(viewport.current!);window.addEventListener('resize',resize);window.visualViewport?.addEventListener('resize',resize);window.addEventListener('orientationchange',resize);
-        return()=>{ro.disconnect();cancelAnimationFrame(layoutFrame);query.removeEventListener('change',mode);window.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('resize',resize);window.removeEventListener('orientationchange',resize);if(cameraTimer.current)clearTimeout(cameraTimer.current);};},[]);
+        return()=>{ro.disconnect();cancelAnimationFrame(layoutFrame);query.removeEventListener('change',mode);window.removeEventListener('resize',resize);window.visualViewport?.removeEventListener('resize',resize);window.removeEventListener('orientationchange',resize);if(cameraTimer.current)clearTimeout(cameraTimer.current);if(cameraFrame.current!==null)cancelAnimationFrame(cameraFrame.current);};},[]);
     useEffect(()=>{if(!mobile)return;const element=panel==='guide'?document.querySelector('#field-guide'):sheet.current;if(!element){setPanelHeight(0);return;}
         const ro=new ResizeObserver(()=>setPanelHeight(Math.round(element.getBoundingClientRect().height)));ro.observe(element);return()=>ro.disconnect();},[panel,mobile]);
     function clearPanel(){const prior=panelRef.current;setPanel(null);setHelp(false);setExplorationMenu(false);setSelectedRabbit(null);setSelectedAnimal(null);setSelectedExploration(null);if(mobileRef.current)requestAnimationFrame(()=>document.querySelector<HTMLButtonElement>(`[data-mobile-nav="${prior==='patrol'?'patrol':prior==='guide'?'guide':'islands'}"]`)?.focus({preventScroll:true}));}
@@ -109,12 +118,8 @@ export default function Experience() {
             if (state.phase === 'walk' && previousPhase !== 'walk')
                 setVisitCaption(null);
             previousPhase = state.phase;
-            setPosition(state.position);
-            setDirection(state.direction);
-            setDistance(state.distance);
-            const moving = state.phase === 'walk' && !state.paused;
-            setWalking(moving);
-            setObserving(state.phase === 'wait' && state.location !== 'main');
+            const moving=state.phase==='walk'&&!state.paused;
+            caretaker.current?.update({position:state.position,direction:state.direction,distance:state.distance,walking:moving,observing:state.phase==='wait'&&state.location!=='main'});
             setPatrolState(previous => previous && previous.location === state.location && previous.target === state.target && previous.phase === state.phase && previous.automatic === state.automatic && previous.paused === state.paused && previous.pending === state.pending && previous.nextStop === state.nextStop ? previous : state);
         });
         patrol.current = controller;
@@ -203,9 +208,9 @@ export default function Experience() {
         const c = cameraRef.current;
         update({ ...c, x: c.x + e.clientX - previous.x, y: c.y + e.clientY - previous.y });
     } if (Math.hypot(e.clientX - gesture.current.x, e.clientY - gesture.current.y) > 4)
-        gesture.current.moved = true; }} onPointerUp={e => { pointers.current.delete(e.pointerId); gesture.current.distance = 0; }} onPointerCancel={e => { pointers.current.delete(e.pointerId); gesture.current.distance = 0; }}>
-   <div className="cloud cloud-one" style={{ transform: `translate(${camera.x * .08}px,${camera.y * .08}px)` }}/><div className="cloud cloud-two" style={{ transform: `translate(${camera.x * .04}px,${camera.y * .04}px)` }}/>
-   <div className={`world ${smooth ? 'smooth' : ''}`} style={{ '--map-scale': camera.scale, width: world.width, height: world.height, transform: `translate(${camera.x}px,${camera.y}px) scale(${camera.scale})` } as CSSProperties}>
+        gesture.current.moved = true; }} onPointerUp={e => { pointers.current.delete(e.pointerId); gesture.current.distance = 0; if(!pointers.current.size)settleHitScale(); }} onPointerCancel={e => { pointers.current.delete(e.pointerId); gesture.current.distance = 0; if(!pointers.current.size)settleHitScale(); }}>
+   <div className="cloud cloud-one" ref={cloudOne}/><div className="cloud cloud-two" ref={cloudTwo}/>
+   <div className={`world ${smooth ? 'smooth' : ''}`} ref={worldElement} style={{width:world.width,height:world.height}}>
     {islands.map(i => <div key={i.id} className={`island island-${i.id} ${selected === i.id ? 'selected' : ''}`} style={{ left: i.x - i.width / 2, top: i.y - i.width * .64, width: i.width }}>
      <button className="island-hit" onClick={() => { if (!gesture.current.moved)
             focus(i.id); }} aria-label={`探索${i.name}`}><img className="island-art" src={assetUrl(`/assets/${i.art}.webp`)} alt={`${i.name}立體微縮浮島`} draggable={false}/></button>
@@ -215,7 +220,7 @@ export default function Experience() {
     </div>)}
     <ExplorationScenery paused={lifePaused} active={selectedExploration} visit={explorationVisit} onSelect={selectExploration}/>
     <AnimalLife paused={lifePaused} controllerRef={animals} onSelect={selectAnimal}/>
-    <Bridges /><Walkways /><Caretaker position={position} direction={direction} distance={distance} walking={walking} observing={observing}/><Bridges front/>
+    <Bridges /><Walkways /><LiveCaretaker ref={caretaker}/><Bridges front/>
     <div className="world-note">一座小島，一種專屬的溫柔。</div>
    </div>
   </div>
