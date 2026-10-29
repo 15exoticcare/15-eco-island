@@ -1,0 +1,1 @@
+export function createLifeLoop(life:{tick:(dt:number)=>void;dispose:()=>void},scheduler:{requestFrame:(cb:(time:number)=>void)=>number;cancelFrame:(id:number)=>void}):{setVisible:(value:boolean)=>void;dispose:()=>void};

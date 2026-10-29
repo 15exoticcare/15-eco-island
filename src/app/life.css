@@ -1,0 +1,36 @@
+/* Body translation is exclusively path locomotion. No CSS fake walk/bob. */
+.caretaker-v2{width:90px;height:126px;z-index:8}
+.actor-sprite{display:block;width:100%;height:100%;overflow:visible}
+.caretaker-v2 .foot-shadow{bottom:-3px;left:30%;width:40%;height:6px;filter:blur(2px)}
+.caretaker-v2 .caretaker-marker{font-size:9px;top:-19px}
+.observing-sprite{overflow:hidden}
+.tablet-indicator{animation:record-light 9s ease-in-out infinite}
+@keyframes record-light{0%,75%,100%{opacity:.15}80%,89%{opacity:.8}}
+.surface-walkways{position:absolute;inset:0;z-index:3;width:1600px;height:1000px;pointer-events:none;filter:drop-shadow(0 3px 1px #60523b33)}
+.creature{position:absolute;transform:translate(-50%,-100%);pointer-events:none;z-index:5;filter:drop-shadow(1px 3px 2px #383d3022)}
+.creature-rig{position:relative;width:100%;height:100%;display:block;overflow:visible}
+.joint{animation-duration:var(--animal-period);animation-delay:var(--animal-delay);animation-iteration-count:infinite;animation-timing-function:ease-in-out;transform-box:view-box}
+.joint-ear{animation-name:ear-listen}.joint-nibble{animation-name:hay-nibble}.joint-wash{animation-name:paw-wash}.joint-preen{animation-name:feather-preen}.joint-look{animation-name:quiet-look}.joint-crest{animation-name:crest-listen}
+@keyframes ear-listen{0%,63%,74%,100%{transform:rotate(0deg)}66%{transform:rotate(-2deg)}69%{transform:rotate(1.3deg)}72%{transform:rotate(-1deg)}}
+@keyframes hay-nibble{0%,28%,46%,100%{transform:rotate(0deg)}31%,37%,43%{transform:rotate(1.1deg)}34%,40%{transform:rotate(-.8deg)}}
+@keyframes paw-wash{0%,52%,76%,100%{transform:translate(0,0) rotate(0deg)}56%,64%,72%{transform:translate(0,-.8px) rotate(-1deg)}60%,68%{transform:translate(0,.3px) rotate(.8deg)}}
+@keyframes feather-preen{0%,25%,52%,100%{transform:rotate(0deg)}31%,42%{transform:rotate(1.6deg)}36%,47%{transform:rotate(-.7deg)}}
+@keyframes quiet-look{0%,58%,84%,100%{transform:rotate(0deg)}65%,73%{transform:rotate(-2deg)}79%{transform:rotate(.8deg)}}
+@keyframes crest-listen{0%,79%,93%,100%{transform:rotate(0deg)}83%{transform:rotate(-2deg)}88%{transform:rotate(1deg)}}
+.creature-caption{display:none;position:absolute;left:50%;bottom:105%;transform:translateX(-50%);background:#fffdf2f0;padding:8px 10px;border-radius:8px;font-size:10px;white-space:nowrap;letter-spacing:1px;box-shadow:0 4px 20px #41563d11}
+.creature-caption small{display:block;color:#829176;font-size:8px;margin-top:4px}
+.island.selected .creature-caption{display:block}
+.creature-parrot .creature-caption{bottom:auto;top:calc(100% + 8px);font-size:8px;padding:4px 7px;letter-spacing:0}
+.creature-parrot .creature-caption small{font-size:6px}
+.aviary-back,.aviary-front{position:absolute;left:-25%;top:-16%;width:150%;height:116%;overflow:visible;pointer-events:none}
+.aviary-front{z-index:2}.aviary-letter{position:absolute;right:-18%;top:-13%;font:8px Georgia,serif;background:#e6e8d4;border:1px solid #a9b394;padding:1px 4px;border-radius:3px;color:#6f7e60;z-index:3}
+.habitat-note{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);font-size:7px;letter-spacing:1px;padding:4px 8px;background:#f8f7eae8;border-radius:4px;color:#788667;white-space:nowrap;z-index:5}
+.resident-count{display:inline-block;font-size:10px;letter-spacing:1px;border:1px solid #d5decb;padding:7px 9px;border-radius:5px;margin-bottom:6px;color:#77896c}
+.motion-toggle{font-size:15px!important}
+.life-paused .joint,.life-paused .tablet-indicator{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.joint,.tablet-indicator{animation:none!important}}
+@media(max-width:700px){.island.selected .creature-caption{display:none}.habitat-note{font-size:8px}}
+.joint-breath{animation-name:rest-breath}@keyframes rest-breath{0%,20%,55%,100%{transform:scaleY(1)}32%,42%{transform:scaleY(1.006)}}
+.motion-review{min-height:100dvh;background:#f5f5ec;padding:32px;color:#53624d;overflow:auto}.motion-review h1{font-size:30px}.motion-review p{font-size:13px;line-height:1.9;max-width:900px}.review-warning{background:#eee4d4;padding:14px;border-radius:8px}.review-controls{display:flex;flex-wrap:wrap;gap:8px}.review-controls button{border:1px solid #c2cbb8;background:#fafaf2;border-radius:8px;padding:10px}.review-controls button[aria-pressed=true]{background:#74856b;color:white}.review-stage{position:relative;width:360px;height:340px;max-width:100%;border:1px solid #c5cebb;margin:24px 0;background:#e3e9dd}.review-stage .caretaker{width:180px;height:252px}.contact-baseline{position:absolute;left:0;right:0;top:310px;border-top:1px dashed #6a7c5c}.frame-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));max-width:1200px;gap:12px;margin-top:22px}.frame-grid figure{margin:0;background:#dce4d6;border-bottom:1px solid #708666}.frame-grid img{width:100%;display:block}.frame-grid figcaption{font-size:10px;text-align:center;padding:8px}.motion-review input{display:block;width:350px;max-width:100%}
+.habitat-note{bottom:auto;top:-4%;font-size:8px}.actor-preload{display:none}
+.map{overflow:clip}.world{left:0;top:0}

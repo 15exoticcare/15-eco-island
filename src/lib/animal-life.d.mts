@@ -1,0 +1,11 @@
+import type {Creature} from './creatures.ts';
+import type {Zone} from './habitats.mjs';
+import type {KeeperReaction} from './keeper-reactions.mjs';
+type Point={x:number;y:number};
+export type AnimalView={id:string;island:string;position:Point;target:Point|null;state:'rest'|'observe'|'care'|'prepare'|'move'|'settle';elapsed:number;duration:number;frame:number;facing:'left'|'right';attention:boolean;noticeIn:number|null;reaction?:KeeperReaction|null};
+export type AnimalProfile=Creature&{index:number;localIndex:number;zone:Zone;species:{rest:number[];period:number;step:number;care:string;weights:Record<string,number>};feature:string;fact:string;careLabel:string;atlas:{available:boolean;movement:boolean;transition:boolean;cell:number;anchor:number[];bounds?:number[][];displaySize:number;reason?:string}};
+export const animalProfiles:AnimalProfile[];
+export const animalActions:Record<AnimalView['state'],string>;
+export function animalFrame(r:AnimalView):number;
+export type AnimalLife={snapshot:()=>AnimalView[];tick:(dt:number)=>void;react:(id:string)=>boolean;noticeKeeper:(island:string,point:Point)=>string[];setPaused:(v:boolean)=>void;setReduced:(v:boolean)=>void;dispose:()=>void};
+export function createAnimalLife(options?:{seed?:number;onUpdate?:(residents:AnimalView[])=>void;locomotion?:boolean}):AnimalLife;

@@ -1,0 +1,53 @@
+name: Yiwu Eco Island - GitHub Pages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Read Pages configuration (enable Pages manually first)
+        id: pages
+        uses: actions/configure-pages@v5
+      - run: npm ci
+      - name: Static build using the actual Pages URL prefix
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Verify the export artifact
+        run: |
+          test -f out/index.html
+          test -f out/404.html
+          test -d out/_next
+          test -d out/assets
+          test -f out/motion-review/index.html
+          test -f out/rabbit-review/index.html
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: out
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish only the new repository Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

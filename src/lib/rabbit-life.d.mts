@@ -1,0 +1,15 @@
+import type {KeeperReaction} from './keeper-reactions.mjs';
+type Point={x:number;y:number};
+export type RabbitId='white'|'lop'|'grey'|'cream';
+export type RabbitState='rest'|'listen'|'observe'|'rise'|'move'|'graze'|'groom'|'settle';
+export type RabbitView={id:RabbitId;position:Point;target:Point|null;state:RabbitState;elapsed:number;duration:number;facing:'left'|'right';frame:number;blend:number;reaction?:KeeperReaction|null};
+export const rabbitGround:{width:number;height:number;polygon:Point[];obstacles:Point[][];lanes:Record<RabbitId,Point[]>};
+export const rabbitProfiles:{id:RabbitId;name:string;personality:string;feature:string;fact:string;rest:number[];weights:Partial<Record<RabbitState,number>>;initial:RabbitState;duration:number;size:number}[];
+export const rabbitActions:Record<RabbitState,string>;
+export function insidePolygon(point:Point,polygon:Point[]):boolean;
+export function safeRabbitPoint(point:Point,radius?:number):boolean;
+export function safeRabbitPath(a:Point,b:Point,others?:RabbitView[]):boolean;
+export function rabbitPose(r:RabbitView):{frame:number;facing:'left'|'right';blend:number};
+export type RabbitLife={snapshot:()=>RabbitView[];tick:(dt:number)=>void;react:(id:RabbitId)=>boolean;noticeKeeper:(point:Point)=>string[];setPaused:(value:boolean)=>void;setReduced:(value:boolean)=>void;dispose:()=>void};
+export function createRabbitLife(options?:{seed?:number;onUpdate?:(rabbits:RabbitView[])=>void;locomotion?:boolean}):RabbitLife;
+export function createRabbitLoop(life:RabbitLife,scheduler:{requestFrame:(cb:(time:number)=>void)=>number;cancelFrame:(id:number)=>void}):{setVisible:(visible:boolean)=>void;dispose:()=>void};

@@ -1,0 +1,16 @@
+node_modules/
+.next*/
+out/
+.env
+.env.*
+.vercel/
+*.tsbuildinfo
+art-source*/
+qa/
+test-results/
+playwright-report/
+*.zip
+*.log
+*.pem
+*.key
+.DS_Store

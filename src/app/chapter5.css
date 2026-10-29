@@ -1,0 +1,21 @@
+.lifespan-section{margin:18px 0;border:1px solid #c7d1bd;border-radius:12px;background:#f0f3e8;color:#4e6248;overflow:hidden}
+.lifespan-section>summary{display:flex;align-items:center;gap:10px;min-height:58px;cursor:pointer;padding:12px 14px;font-size:14px;line-height:1.5;list-style:none;font-weight:500}
+.lifespan-section>summary::-webkit-details-marker{display:none}.lifespan-section>summary>span:first-child{font:23px Georgia,serif;color:#8e756a}.lifespan-section>summary small{display:block;font-size:11px;color:#65745d;font-weight:400;margin-top:2px}.lifespan-chevron{margin-left:auto;font-size:19px;font-weight:400}.lifespan-section[open] .lifespan-chevron{transform:rotate(45deg)}
+.lifespan-section summary:focus-visible{outline:3px solid #78926c;outline-offset:-4px;border-radius:10px}
+.lifespan-content{border-top:1px solid #cbd6c1;padding:12px 14px 14px}.refined-card .lifespan-content p{font-size:13px;line-height:1.85;color:#4f6048;margin:10px 0}.refined-card .lifespan-content .lifespan-scope{font-size:12px;color:#617358;margin:0 0 10px}
+.lifespan-content dl{margin:0}.lifespan-content dl>div{padding:10px 0;border-bottom:1px solid #d2dbc9}.lifespan-content dt{font-size:12px;line-height:1.6;color:#617358}.lifespan-content dd{margin:3px 0 0;font-size:15px;line-height:1.7;color:#41573c;font-weight:500}
+.refined-card .lifespan-content .lifespan-note{font-size:12px;line-height:1.85;background:#faf9f0;padding:10px;border-radius:7px;color:#59674f}.lifespan-sources{display:flex;flex-direction:column;gap:8px;padding:12px 0 8px;font-size:12px;line-height:1.65}.lifespan-sources>span{font-weight:500}.lifespan-sources a{display:block;text-decoration:underline;text-underline-offset:3px;color:#4e6544;min-height:24px;overflow-wrap:anywhere}.lifespan-sources time{font-size:11px;color:#687560}.refined-card .lifespan-content .lifespan-disclaimer{font-size:12px;border-top:1px solid #cbd6c1;padding-top:12px;margin-bottom:0;color:#55644d}
+.patrol-simulation{grid-column:2;font-size:10px;color:#65735e;line-height:1.5}.patrol-mode{max-width:350px}
+@media(max-width:849px){.lifespan-section>summary{padding:12px;font-size:14px;min-height:58px}.lifespan-content{padding:10px 12px 14px}.lifespan-sources a{min-height:36px;display:flex;align-items:center}.patrol-simulation{font-size:9px;line-height:1.4}.patrol-mode{max-width:none}}
+@media(prefers-reduced-motion:reduce){.lifespan-chevron{transition:none}}
+.refined-card p.lifespan-disclaimer{font-size:12px;line-height:1.85;color:#55644d;border-top:1px solid #cbd6c1;padding-top:12px}
+.lifespan-open-hint{display:none!important}.lifespan-section[open] .lifespan-closed-hint{display:none}.lifespan-section[open] .lifespan-open-hint{display:block!important}
+.lifespan-reader-back{display:none}
+@media(max-width:849px){
+ /* Reading space replaces the directory temporarily; the map and footer retain
+    their geometry and keep running. Native details restores the directory. */
+ main[data-island] .refined-card:has(.lifespan-section[open]){bottom:122px;max-height:min(52dvh,calc(100dvh - 300px));z-index:19}
+ main:has(.lifespan-section[open]) .island-label-layer{visibility:hidden;pointer-events:none}
+ .lifespan-section[open]>summary{position:sticky;top:0;z-index:1;background:#f0f3e8;border-bottom:1px solid #cbd6c1}
+ .refined-card:has(.lifespan-section[open]) .lifespan-reader-back{display:block;position:absolute;right:48px;top:8px;min-height:32px;padding:5px 10px;background:#edf1e5;color:#52654c;border:1px solid #b9c7af;border-radius:10px;font-size:12px}
+}

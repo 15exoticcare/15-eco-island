@@ -1,0 +1,14 @@
+.patrol-footer{height:88px;padding:8px 24px;gap:22px;background:#f7f8eef0;backdrop-filter:blur(14px);border-top:1px solid #d4ddc980}
+.patrol-controls{display:flex;align-items:center;gap:20px;flex:1;min-width:0;color:#52654c;text-align:left}
+.patrol-summary{display:flex;align-items:center;gap:26px;min-width:0;flex:1}
+.patrol-mode{display:grid;grid-template-columns:7px 1fr;align-items:center;gap:4px 7px;min-width:165px}
+.patrol-mode strong{font-size:12px;font-weight:500;letter-spacing:.8px}.patrol-mode small{grid-column:2;font-size:10px;color:#7c8973;line-height:1.5}
+.patrol-dot,.paused-dot{width:5px;height:5px;border-radius:50%;background:#7f9d6f}.paused-dot{background:#b39e7a}
+.patrol-summary dl{display:flex;gap:24px;margin:0;min-width:0}.patrol-summary dl>div{min-width:0}.patrol-summary dt{font-size:9px;color:#8c9882;margin-bottom:3px;letter-spacing:1px}.patrol-summary dd{font-size:11px;margin:0;line-height:1.5;overflow-wrap:anywhere}
+.patrol-toggle{flex:none;min-height:42px;padding:0 16px;border:1px solid #aebda4;border-radius:13px;background:#edf1e5;color:#52654c;font-size:12px;cursor:pointer;white-space:nowrap}.patrol-toggle:hover{background:#dfe7d4}.patrol-toggle:focus-visible{outline:3px solid #9daf8b;outline-offset:2px}
+.map{bottom:88px}.island-label-layer{bottom:88px}.info-card{bottom:108px}
+@media(min-width:850px) and (max-width:1100px){.patrol-footer .contact{display:none}.patrol-summary{gap:16px}}
+@media(max-width:849px){
+ .patrol-footer{height:112px;padding:8px 12px;gap:0;justify-content:stretch}.patrol-controls{gap:10px;align-items:center}.patrol-summary{display:block;min-width:0}.patrol-mode{min-width:0;gap:2px 6px}.patrol-mode strong{font-size:11px}.patrol-mode small{font-size:8px;line-height:1.4}.patrol-summary dl{gap:12px;margin-top:4px}.patrol-summary dl>div{flex:1}.patrol-summary dt{font-size:8px;margin-bottom:1px}.patrol-summary dd{font-size:10px;line-height:1.35}.patrol-toggle{font-size:11px;min-height:44px;padding:0 11px;border-radius:12px}
+ .island-label-layer{bottom:122px}.map{bottom:366px}.refined-card{bottom:376px;max-height:31dvh}.patrol-footer .contact{display:none!important}
+}

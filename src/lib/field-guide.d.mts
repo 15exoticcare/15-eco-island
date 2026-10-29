@@ -1,0 +1,9 @@
+export type GuideEntry={id:string;name:string;group:'hotel'|'visitor';description:string;facts:string[];lifespanKey?:string;image:string;atlas:boolean;hint:string;place:string;source?:{name:string;url:string}};
+export type GuideState={ids:string[];storageState:'ready'|'unavailable'|'unsupported'|'recovered';loaded:boolean};
+export const guideVersion:number;
+export const guideStorageKey:string;
+export const guideEntries:GuideEntry[];
+export function decodeGuide(raw:string|null|undefined):Pick<GuideState,'ids'|'storageState'>;
+export function encodeGuide(ids:string[]):string;
+export function guideComplete(ids:string[]):boolean;
+export function createGuideStore(options:{getStorage:()=>Pick<Storage,'getItem'|'setItem'>;onChange?:(state:GuideState)=>void;onDiscover?:(id:string,complete:boolean)=>void}):{snapshot:()=>GuideState;load:()=>void;discover:(id:string)=>boolean;reset:()=>void;sync:()=>void};
