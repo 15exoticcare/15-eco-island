@@ -1,4 +1,5 @@
-import type { Metadata, Viewport } from 'next';
+import type { Viewport } from 'next';
+import {siteMetadata} from '@/lib/seo';
 import './globals.css';
 import './life.css';
 import './refinements.css';
@@ -15,7 +16,7 @@ import './diorama-stage3.css';
 import './diorama-stage4.css';
 import './diorama-stage5.css';
 export const viewport: Viewport = {width:'device-width',initialScale:1,viewportFit:'cover',interactiveWidget:'resizes-content'};
-export const metadata: Metadata = {title:'壹伍生態島｜每一種特別，都值得被溫柔對待',description:'探索壹伍非犬貓旅宿的微縮浮島世界，與寵物保母一起認識兔兔與鸚鵡。'};
+export const metadata = siteMetadata;
 export default function Layout({children}:{children:React.ReactNode}) {return <html lang="zh-Hant"><body>{children}</body></html>}
 
 

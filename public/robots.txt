@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://island.15exoticanimalhotel.com.tw/sitemap.xml
