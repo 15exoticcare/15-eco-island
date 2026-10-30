@@ -1,9 +1,9 @@
 import {useMemo} from 'react';
 import {islands,bridgeSpans,type IslandId,type Point} from '@/lib/islands';
 import {placeLabels} from '@/lib/labels.mjs';
-type Props={camera:{x:number;y:number;scale:number};viewport:{width:number;height:number};selected:IslandId|null;smooth:boolean;onSelect:(id:IslandId)=>void;offsets?:Record<string,Point>;spans?:Record<string,Point[]>};
-export default function IslandLabels({camera,viewport,selected,smooth,onSelect,offsets,spans=bridgeSpans}:Props){
- const compact=viewport.width<850,rail=!!selected&&!compact;
+type Props={camera:{x:number;y:number;scale:number};viewport:{width:number;height:number};selected:IslandId|null;smooth:boolean;onSelect:(id:IslandId)=>void;offsets?:Record<string,Point>;spans?:Record<string,Point[]>;directory?:boolean};
+export default function IslandLabels({camera,viewport,selected,smooth,onSelect,offsets,spans=bridgeSpans,directory=false}:Props){
+ const compact=viewport.width<850,rail=(!!selected||directory)&&!compact;
  const labels=useMemo(()=>{
   if(compact||!viewport.width)return [];
   if(rail){const step=Math.min(42,(viewport.height-48)/10);return islands.map((i,n)=>({id:i.id,x:18,y:38+n*step,width:190,height:Math.min(36,step-5),anchorX:0,anchorY:0}));}

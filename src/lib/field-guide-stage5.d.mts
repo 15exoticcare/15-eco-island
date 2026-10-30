@@ -1,0 +1,10 @@
+import type {GuideEntry,GuideState}from'./field-guide.mjs';
+export const expandedGuideVersion:number;
+export const expandedGuideStorageKey:string;
+export const expandedGuideEntries:GuideEntry[];
+export const migrationRules:{fromVersion:number;toVersion:number;remap:Record<string,string>;drop:string[];requireDiscovery:string[]};
+export function migrateLegacyGuide(raw:string|null|undefined):Pick<GuideState,'ids'|'storageState'>&{migrated:boolean};
+export function decodeExpandedGuide(raw:string|null|undefined):Pick<GuideState,'ids'|'storageState'>;
+export function encodeExpandedGuide(ids:string[]):string;
+export function expandedGuideComplete(ids:string[]):boolean;
+export function createExpandedGuideStore(options:{getStorage:()=>Pick<Storage,'getItem'|'setItem'>;onChange?:(state:GuideState)=>void;onDiscover?:(id:string,complete:boolean)=>void}):{snapshot:()=>GuideState;load:()=>void;discover:(id:string)=>boolean;reset:()=>void;sync:()=>void};
