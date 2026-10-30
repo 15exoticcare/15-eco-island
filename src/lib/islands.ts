@@ -26,7 +26,7 @@ export const islands:Island[]=[
   },
   {
     "id": "rabbit",
-    "name": "兔兔島",
+    "name": "兔兔區",
     "english": "THE CLOVER MEADOW",
     "number": "02",
     "x": 850,
@@ -48,7 +48,7 @@ export const islands:Island[]=[
   },
   {
     "id": "parrot",
-    "name": "鸚鵡島",
+    "name": "鸚鵡區",
     "english": "THE CANOPY RETREAT",
     "number": "03",
     "x": 2040,
@@ -70,7 +70,7 @@ export const islands:Island[]=[
   },
   {
     "id": "guinea",
-    "name": "天竺鼠島",
+    "name": "天竺鼠區",
     "english": "THE GENTLE GARDEN",
     "number": "04",
     "x": 390,
@@ -92,7 +92,7 @@ export const islands:Island[]=[
   },
   {
     "id": "hamster",
-    "name": "倉鼠島",
+    "name": "倉鼠區",
     "english": "THE LITTLE BURROW",
     "number": "05",
     "x": 1050,
@@ -114,7 +114,7 @@ export const islands:Island[]=[
   },
   {
     "id": "hedgehog",
-    "name": "刺蝟島",
+    "name": "刺蝟區",
     "english": "THE LANTERN WOODS",
     "number": "06",
     "x": 1830,
@@ -136,7 +136,7 @@ export const islands:Island[]=[
   },
   {
     "id": "ferret",
-    "name": "雪貂島",
+    "name": "雪貂區",
     "english": "THE WANDERING TRAIL",
     "number": "07",
     "x": 2510,
@@ -158,7 +158,7 @@ export const islands:Island[]=[
   },
   {
     "id": "meerkat",
-    "name": "狐獴島",
+    "name": "狐獴區",
     "english": "THE WATCHFUL DUNES",
     "number": "08",
     "x": 540,
@@ -180,7 +180,7 @@ export const islands:Island[]=[
   },
   {
     "id": "chinchilla",
-    "name": "龍貓島",
+    "name": "龍貓區",
     "english": "THE SILVER HIGHLANDS",
     "number": "09",
     "x": 1390,
@@ -202,7 +202,7 @@ export const islands:Island[]=[
   },
   {
     "id": "glider",
-    "name": "蜜袋鼯島",
+    "name": "蜜袋鼯區",
     "english": "THE MOONLIT CANOPY",
     "number": "10",
     "x": 2250,

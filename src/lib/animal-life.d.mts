@@ -8,4 +8,4 @@ export const animalProfiles:AnimalProfile[];
 export const animalActions:Record<AnimalView['state'],string>;
 export function animalFrame(r:AnimalView):number;
 export type AnimalLife={snapshot:()=>AnimalView[];tick:(dt:number)=>void;react:(id:string)=>boolean;noticeKeeper:(island:string,point:Point)=>string[];setPaused:(v:boolean)=>void;setReduced:(v:boolean)=>void;dispose:()=>void};
-export function createAnimalLife(options?:{seed?:number;onUpdate?:(residents:AnimalView[])=>void;locomotion?:boolean}):AnimalLife;
+export function createAnimalLife(options?:{seed?:number;onUpdate?:(residents:AnimalView[])=>void;locomotion?:boolean;profiles?:AnimalProfile[];pathSafe?:typeof import('./habitats.mjs').safeAnimalPath}):AnimalLife;

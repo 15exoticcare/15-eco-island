@@ -10,6 +10,7 @@ import AnimalLife from './AnimalLife';
 import AnimalCard from './AnimalCard';
 import { animalProfiles, type AnimalLife as AnimalController } from '@/lib/animal-life.mjs';
 import { habitats } from '@/lib/habitats.mjs';
+import {hamsterPlacement} from '@/lib/hamster-ground.mjs';
 import Walkways from './Walkways';
 import Bridges from './Bridges';
 import IslandCard from './IslandCard';
@@ -128,7 +129,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
                 if (state.location === 'rabbit')
                     rabbits.current?.noticeKeeper({ x: point.x * 1200, y: point.y * 1200 });
                 else if (habitats[state.location])
-                    animals.current?.noticeKeeper(state.location, { x: point.x * 1000, y: point.y * 1000 });
+                    animals.current?.noticeKeeper(state.location, artFinal&&state.location==='hamster'?{x:(state.position.x-hamsterPlacement.left)/hamsterPlacement.width*1000,y:(state.position.y-hamsterPlacement.top)/hamsterPlacement.width*1000}:{ x: point.x * 1000, y: point.y * 1000 });
                 arrivals++;
                 setVisitCaption(arrivals % 3 === 1 ? ['保母正在觀察寶貝的活動狀態 ♡', '今天也要細心照顧每一位小旅客。', '每一種特別的寶貝，都值得被溫柔對待。'][Math.floor(arrivals / 3) % 3] : null);
             }
@@ -236,7 +237,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
     {artFinal&&<DioramaFinal front/>}
     {islands.map(i => <div key={i.id} className={`island island-${i.id} ${selected === i.id ? 'selected' : ''}`} style={{ left: i.x - i.width / 2, top: i.y - i.width * .64, width: i.width }}>
      <button className="island-hit" onClick={() => { if (!gesture.current.moved)
-            focus(i.id); }} aria-label={`探索${i.name}`}><img className="island-art" src={assetUrl(`/assets/${i.art}.webp`)} alt={`${i.name}立體微縮浮島`} draggable={false}/></button>
+            focus(i.id); }} aria-label={`探索${i.name}`}><img className="island-art" src={assetUrl(`/assets/${i.art}.webp`)} alt={`${i.name}立體微縮區域`} draggable={false}/></button>
      {i.id === 'main' && <div className="building-sign"><img src={assetUrl("/assets/logo-original.jpg")} alt="壹伍非犬貓旅宿入口原始商標"/><span>壹伍<br /><small>非犬貓旅宿</small></span></div>}
      {i.id === 'rabbit' && <RabbitLife paused={lifePaused} controllerRef={rabbits} onSelect={selectRabbit}/>}
 
@@ -244,18 +245,18 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
     {eggPreview?<EggScenery paused={lifePaused} active={selectedExploration} activeActor={selectedVisitorActor} visit={explorationVisit} onSelect={selectExploration}/>:<ExplorationScenery paused={lifePaused} active={selectedExploration} visit={explorationVisit} onSelect={selectExploration} offsets={artFinal?finalVisitorOffsets:undefined}/>}
     <AnimalLife paused={lifePaused} controllerRef={animals} onSelect={selectAnimal}/>
     <Bridges spans={artPreview?artSpans:undefined}/><Walkways routes={artPreview?artWalkways:undefined}/><LiveCaretaker ref={caretaker}/><Bridges front spans={artPreview?artSpans:undefined}/>
-    <div className="world-note">一座小島，一種專屬的溫柔。</div>
+    <div className="world-note">一個區域，一種專屬的溫柔。</div>
    </div>
   </div>
   <div className="desktop-island-labels"><IslandLabels directory={eggPreview&&!!eggFocus} offsets={artFinal?finalLabelOffsets:artExpansion?expansionLabelOffsets:undefined} spans={artExpansion?artSpans:undefined} camera={camera} viewport={viewportSize} selected={selected} smooth={smooth} onSelect={focus}/></div>
   <div className="map-tools" aria-label="地圖控制"><button onClick={() => { setSmooth(true); zoom(1.25); }} aria-label="放大">＋</button><span>{Math.round(camera.scale * 100)}%</span><button onClick={() => { setSmooth(true); zoom(.8); }} aria-label="縮小">−</button><div /><button onClick={() => { clearPanel(); fit(true); setSelectedExploration(null); setExplorationMenu(false); setSelected(null); setSelectedRabbit(null); setSelectedAnimal(null); }} aria-label="返回全景">⌖</button><button onClick={() => {setPanel(null);setHelp(!help);}} aria-label="操作說明">?</button><button className="motion-toggle" onClick={() => setLifePaused(!lifePaused)} aria-label={lifePaused ? '播放環境微動畫' : '暫停環境微動畫'} aria-pressed={lifePaused}>{lifePaused ? '▷' : 'Ⅱ'}</button><button className="exploration-tool" aria-label="尋找周邊小訪客" aria-expanded={explorationMenu} aria-controls="exploration-directory" onClick={() => {setPanel(null);setExplorationMenu(!explorationMenu);}}>✧</button><FieldGuide ref={guide} onNavigate={navigateGuide} open={panel==='guide'} onOpenChange={changeGuide} showReward={!mobile||!panel}/></div>
-  {explorationMenu && <nav id="exploration-directory" className="exploration-directory" aria-label="周邊生態探索"><strong>林間的小小訪客</strong><p>在島外停一停，發現自然裡的細節。</p>{explorationVisitors.map(p => <button key={p.id} onClick={() => {if(eggPreview)navigateGuide(p.id,'visitor');else selectExploration(p.id);}}>{p.name}<small>{p.setting} ↗</small></button>)}</nav>}
-  {help && <div className="help">滑鼠拖曳／手機單指平移<br />滾輪／雙指縮放<br />點選島嶼探索，按「巡視」讓保母出發<br />鍵盤：方向鍵移動、＋／− 縮放、Home 全景</div>}
+  {explorationMenu && <nav id="exploration-directory" className="exploration-directory" aria-label="周邊生態探索"><strong>林間的小小訪客</strong><p>在島外停一停，發現自然裡的細節。</p>{explorationVisitors.map(p => <button key={p.id} onClick={() => {if(eggPreview)navigateGuide(p.id,'visitor');else selectExploration(p.id);}}>{p.name}<small>{p.setting}</small></button>)}</nav>}
+  {help && <div className="help">滑鼠拖曳／手機單指平移<br />滾輪／雙指縮放<br />點選區域探索，按「巡視」讓保母出發<br />鍵盤：方向鍵移動、＋／− 縮放、Home 全景</div>}
   {mobile&&<><button className="mobile-patrol-pill" aria-label="查看巡視狀態" onClick={()=>openMobile('patrol')}><span className={patrolState?.paused?'paused-dot':'patrol-dot'}/>{patrolState?.paused?'巡視已暫停':'保母巡視中'}<span aria-hidden="true">↗</span></button>
   {!panel&&<div className="mobile-map-actions" aria-label="手機地圖工具"><button aria-label="放大地圖" onClick={()=>{setSmooth(false);zoom(1.25);}}>＋</button><button aria-label="縮小地圖" onClick={()=>{setSmooth(false);zoom(.8);}}>−</button><button aria-label="世界全景" onClick={()=>{clearPanel();setSelected(null);fit(true);}}>⌖</button><button aria-label="更多探索工具" onClick={()=>openMobile('tools')}><NavIcon kind="tools"/></button></div>}
   <MobileNavigation panel={panel} onOpen={openMobile}/></>}
   <div id="mobile-sheet" ref={sheet} className="mobile-sheet-host" data-empty={!panel||panel==='guide'} data-kind={panel??'none'} role={mobile&&panel&&panel!=='guide'?'dialog':undefined} aria-modal={mobile&&panel&&panel!=='guide'?'false':undefined} aria-label={mobile?'地圖探索面板':undefined}>
-  {mobile&&panel&&panel!=='guide'&&<MobileSheetHeading onClose={clearPanel}>{panel==='islands'?'十島導覽':panel==='patrol'?'保母巡視':panel==='tools'?'探索選單':panel==='visitor'?'周邊生態手札':panel==='island'?'島嶼手札':'遇見小夥伴'}</MobileSheetHeading>}
+  {mobile&&panel&&panel!=='guide'&&<MobileSheetHeading onClose={clearPanel}>{panel==='islands'?'十區導覽':panel==='patrol'?'保母巡視':panel==='tools'?'探索選單':panel==='visitor'?'周邊生態手札':panel==='island'?'區域手札':'遇見小夥伴'}</MobileSheetHeading>}
   {current&&panel==='island'&&<IslandCard island={current} onClose={()=>{setPanel(null);setSelected(null);fit();}} onVisit={visit} onResident={id=>{if(current.id==='rabbit')selectRabbit(id as RabbitId);else selectAnimal(id);}}/>}
   {panel==='rabbit'&&selectedRabbit&&<RabbitCard id={selectedRabbit} onClose={()=>{setSelectedRabbit(null);setPanel(mobileRef.current?null:'island');}}/>}
   {panel==='visitor'&&selectedExploration&&<ExplorationCard id={selectedExploration} actorName={eggPreview?eggAnimals.find(a=>a.id===selectedVisitorActor)?.name:undefined} onClose={closeExploration}/>}

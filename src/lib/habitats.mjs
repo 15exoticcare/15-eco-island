@@ -43,10 +43,10 @@ export const habitats={
 
 export function inside(p,poly){let result=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)result=!result;}return result;}
 export function segmentDistance(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-a.x-dx*t,p.y-a.y-dy*t);}
-export function safeAnimalPoint(island,id,p,radius=6){
- const habitat=habitats[island],zone=habitat?.zones[id];if(!zone||!inside(p,zone.polygon)||p.x<0||p.x>1000||p.y<0||p.y>habitat.height)return false;
+export function safeAnimalPoint(island,id,p,radius=6,habitatMap=habitats){
+ const habitat=habitatMap[island],zone=habitat?.zones[id];if(!zone||!inside(p,zone.polygon)||p.x<0||p.x>1000||p.y<0||p.y>habitat.height)return false;
  if(habitat.kind!=='ground'&&segmentDistance(p,...zone.support)>2)return false;
  for(let a=0;a<Math.PI*2;a+=Math.PI/4){const q={x:p.x+Math.cos(a)*radius,y:p.y+Math.sin(a)*radius};if(!inside(q,zone.polygon)||habitat.obstacles.some(o=>inside(q,o)))return false;}
  return !habitat.obstacles.some(o=>inside(p,o));
 }
-export function safeAnimalPath(island,id,a,b,others=[]){const length=Math.hypot(b.x-a.x,b.y-a.y);for(let d=0;d<=length+2;d+=2){const t=Math.min(1,d/(length||1)),p={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};if(!safeAnimalPoint(island,id,p)||others.some(o=>Math.hypot(p.x-o.position.x,p.y-o.position.y)<60||o.target&&Math.hypot(p.x-o.target.x,p.y-o.target.y)<60))return false;}return true;}
+export function safeAnimalPath(island,id,a,b,others=[],habitatMap=habitats){const length=Math.hypot(b.x-a.x,b.y-a.y);for(let d=0;d<=length+2;d+=2){const t=Math.min(1,d/(length||1)),p={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};if(!safeAnimalPoint(island,id,p,6,habitatMap)||others.some(o=>Math.hypot(p.x-o.position.x,p.y-o.position.y)<60||o.target&&Math.hypot(p.x-o.target.x,p.y-o.target.y)<60))return false;}return true;}

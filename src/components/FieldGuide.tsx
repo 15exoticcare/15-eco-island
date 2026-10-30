@@ -73,13 +73,13 @@ export default memo(forwardRef<FieldGuideHandle,Props>(function FieldGuide({onNa
       <h3 ref={detailHeading} tabIndex={-1}>{entry.name}</h3><p>{entry.description}</p><ul>{entry.facts.map(fact=><li key={fact}>{fact}</li>)}</ul>
       {entry.lifespanKey&&<LifespanSection key={entry.id} island={entry.lifespanKey}/>}
       {entry.source&&<details className="guide-natural-source"><summary>小知識參考來源</summary><a href={entry.source.url} target="_blank" rel="noreferrer">{entry.source.name} ↗</a><time dateTime={reviewed}>資料核對：{reviewed}</time></details>}
-      <button className="guide-go" onClick={()=>{close(false);onNavigate(entry.id,entry.group);}}>{entry.group==='hotel'?`前往${entry.place}`:`回到${entry.place}`} ↗</button>
+      <button className="guide-go" onClick={()=>{close(false);onNavigate(entry.id,entry.group);}}>{entry.group==='hotel'?`前往${entry.place}`:`回到${entry.place}`}</button>
       {!expanded&&entry.group==='visitor'&&<p className="guide-service-note">這位周邊生態訪客不代表壹伍提供此物種住宿服務。</p>}
      </article>:<>
       {complete&&<Keepsake total={total}/>}
       <p className="guide-intro">在地圖上輕點小動物，讀一則日常，收藏一次相遇。</p>
       {(['hotel','visitor'] as const).map(group=><section className="guide-group" key={group} aria-label={group==='hotel'?'壹伍住宿物種':expanded?'彩蛋探索':'環境探索訪客'}><div className="guide-group-heading"><h3>{group==='hotel'?'壹伍住宿物種':expanded?'彩蛋探索':'環境探索訪客'}</h3><span>{view.ids.filter(id=>guideEntries.find(e=>e.id===id)?.group===group).length}／{guideEntries.filter(e=>e.group===group).length}</span></div>
-       <p>{group==='hotel'?'九座島嶼，九種專屬的照顧。':expanded?'七座小島，七種不同的相遇。':'島外偶遇的小訪客，不屬於旅宿住宿服務。'}</p>
+       <p>{group==='hotel'?'九個區域，九種專屬的照顧。':expanded?'七個探索區，七種不同的相遇。':'島外偶遇的小訪客，不屬於旅宿住宿服務。'}</p>
        <div className="guide-grid">{guideEntries.filter(e=>e.group===group).map(e=>{const unlocked=view.ids.includes(e.id);return <button key={e.id} type="button" className={`guide-tile ${unlocked?'discovered':'undiscovered'}`} data-guide-entry={e.id} data-discovered={unlocked} disabled={!unlocked} aria-label={`${e.name}，${unlocked?'已發現，查看圖鑑':'尚未發現，'+e.hint}`} onClick={()=>setDetail(e.id)}><Portrait entry={e} locked={!unlocked}/><span className="guide-tile-name">{e.name}</span><span className="guide-tile-status">{unlocked?'已發現・翻開看看':'尚未發現'}</span><small>{unlocked?e.place:e.hint}</small></button>})}</div>
       </section>)}
      </>}

@@ -1,3 +1,4 @@
+import{groundHabitats,groundProfiles,groundPathSafe,hamsterPlacement,hamsterFencePolygons}from'@/lib/hamster-ground.mjs';
 import AtlasFrames from './AtlasFrames';
 import {useArtExpansion} from './ArtExpansion';
 import {useArtFinal} from './ArtFinal';
@@ -19,8 +20,9 @@ export function AnimalSprite({ profile: p, resident: r }: {
     const bounds = animalBounds(p, r);
     return <svg className="animal-life-sprite" viewBox={bounds.join(' ')} aria-hidden="true"><defs><clipPath id={`animal-cell-${r.id}`}><rect width="192" height="192"/></clipPath></defs><g transform={r.facing === 'right' ? 'translate(192 0) scale(-1 1)' : undefined} clipPath={`url(#animal-cell-${r.id})`}><AtlasFrames src={assetUrl(`/assets/${final?'diorama-stage4':expansion?'diorama-stage3':diorama?'diorama-v1':'animal-life'}/${r.id}.webp`)} frame={r.frame} cell={192} columns={4} width={768} height={768} blendMs={blend?150:0}/></g></svg>;
 }
-const fixedBounds=new Map<string,number[]>();
-function animalBounds(p: AnimalProfile, r: AnimalView) { let b=fixedBounds.get(p.id);if(!b){const frames=p.atlas.bounds??[[0,0,192,192]],x=Math.min(...frames.map(v=>v[0])),y=Math.min(...frames.map(v=>v[1]));b=[x,y,Math.max(...frames.map(v=>v[0]+v[2]))-x,Math.max(...frames.map(v=>v[1]+v[3]))-y];fixedBounds.set(p.id,b);} return [r.facing === 'right' ? 192 - b[0] - b[2] : b[0], b[1], b[2], b[3]]; }
+// Different art editions can share an animal ID but use different atlas bounds.
+const fixedBounds=new WeakMap<AnimalProfile['atlas'],number[]>();
+function animalBounds(p: AnimalProfile, r: AnimalView) { let b=fixedBounds.get(p.atlas);if(!b){const frames=p.atlas.bounds??[[0,0,192,192]],x=Math.min(...frames.map(v=>v[0])),y=Math.min(...frames.map(v=>v[1]));b=[x,y,Math.max(...frames.map(v=>v[0]+v[2]))-x,Math.max(...frames.map(v=>v[1]+v[3]))-y];fixedBounds.set(p.atlas,b);} return [r.facing === 'right' ? 192 - b[0] - b[2] : b[0], b[1], b[2], b[3]]; }
 const Resident = memo(function Resident({ r, p, width, height, onSelect }: {
     r: AnimalView;
     p: AnimalProfile;
@@ -56,9 +58,11 @@ export default memo(function AnimalLife({ paused, onSelect, controllerRef }: {
     onSelect: (id: string) => void;
     controllerRef: RefObject<Life | null>;
 }) {
-    const [residents, setResidents] = useState<AnimalView[]>(() => createAnimalLife().snapshot());
+    const final=useArtFinal(),catalog=final?groundProfiles:animalProfiles,spatial=final?groundHabitats:habitats;
+    const options=final?{profiles:groundProfiles,pathSafe:groundPathSafe}:{};
+    const [residents, setResidents] = useState<AnimalView[]>(() => createAnimalLife(options).snapshot());
     useEffect(() => {
-        const life = createAnimalLife({ onUpdate: next => setResidents(previous => next.some((r, n) => r.state !== previous[n].state || r.frame !== previous[n].frame || r.reaction?.label !== previous[n].reaction?.label || r.facing !== previous[n].facing || r.position.x !== previous[n].position.x || r.position.y !== previous[n].position.y) ? next : previous) });
+        const life = createAnimalLife({ ...options,onUpdate: next => setResidents(previous => next.some((r, n) => r.state !== previous[n].state || r.frame !== previous[n].frame || r.reaction?.label !== previous[n].reaction?.label || r.facing !== previous[n].facing || r.position.x !== previous[n].position.x || r.position.y !== previous[n].position.y) ? next : previous) });
         controllerRef.current = life;
         const loop = createLifeLoop(life, { requestFrame: requestAnimationFrame, cancelFrame: cancelAnimationFrame }), motion = matchMedia('(prefers-reduced-motion: reduce)');
         const visibility = () => loop.setVisible(!document.hidden), reduce = () => life.setReduced(motion.matches);
@@ -70,11 +74,12 @@ export default memo(function AnimalLife({ paused, onSelect, controllerRef }: {
     }, [controllerRef]);
     useEffect(() => { controllerRef.current?.setPaused(paused); }, [paused, controllerRef]);
     return <>{islands.filter(i => habitats[i.id]).map(i => {
-            const h = habitats[i.id];
-            return <div key={i.id} className={`animal-habitat animal-habitat-${i.id}`} data-habitat={i.id} style={{ left: i.x - i.width / 2, top: i.y - i.width * .64, width: i.width, height: i.width * h.height / 1000 }}>
+            const h = spatial[i.id];
+            return <div key={i.id} className={`animal-habitat animal-habitat-${i.id}`} data-habitat={i.id} style={final&&i.id==='hamster'?hamsterPlacement:{ left: i.x - i.width / 2, top: i.y - i.width * .64, width: i.width, height: i.width * h.height / 1000 }}>
   {Object.entries(h.zones).map(([id, zone]) => <Support key={id} id={id} zone={zone} height={h.height} kind={h.kind}/>)}
-  {residents.filter(r => r.island === i.id).map(r => <Resident key={r.id} r={r} p={animalProfiles.find(p => p.id === r.id)!} width={i.width} height={h.height} onSelect={onSelect}/>)}
+  {residents.filter(r => r.island === i.id).map(r => <Resident key={r.id} r={r} p={catalog.find(p => p.id === r.id)!} width={final&&i.id==='hamster'?hamsterPlacement.width:i.width} height={h.height} onSelect={onSelect}/>)}
   {h.occluders.map((o, n) => <img key={n} className="animal-scenery-front" src={assetUrl(`/assets/${i.art}.webp`)} style={{ zIndex: o.depth, clipPath: `polygon(${o.polygon.map(([x, y]) => `${x / 10}% ${y / h.height * 100}%`).join(',')})` }} alt="" aria-hidden="true" draggable={false}/>)}
+  {final&&i.id==='hamster'&&<svg className="hamster-fence-front" viewBox="0 0 1774 887" aria-hidden="true"><defs><clipPath id="hamster-front-fences">{hamsterFencePolygons.map((poly,n)=><polygon key={n} points={poly.map(p=>p.join(',')).join(' ')}/>)}</clipPath></defs><image href={assetUrl('/assets/diorama-stage4/front-gardens.webp')} width="1774" height="887" clipPath="url(#hamster-front-fences)"/></svg>}
   {i.id === 'hamster' && Object.entries(h.zones).map(([id, z]) => <span key={id} className="private-room-mark" style={{ left: `${z.nodes[0].x / 10}%`, top: `${355 / h.height * 100}%` }}>{z.label}</span>)}
   {(i.id === 'hamster' || i.id === 'parrot') && <span className="animal-habitat-note">{h.note}</span>}
  </div>;

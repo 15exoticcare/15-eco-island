@@ -43,7 +43,7 @@ export default memo(function RabbitLife({ paused, onSelect, controllerRef }: {
         return () => { loop.dispose(); motion.removeEventListener('change', reduce); document.removeEventListener('visibilitychange', visibility); controllerRef.current = null; };
     }, [controllerRef]);
     useEffect(() => { controllerRef.current?.setPaused(paused); }, [paused, controllerRef]);
-    return <div className="rabbit-life" aria-label="兔兔島的自主生活草地">
+    return <div className="rabbit-life" aria-label="兔兔區的自主生活草地">
   {rabbits.map(r => <Rabbit key={r.id} r={r} onSelect={onSelect}/>)}
   <img className="rabbit-scenery-occluder rabbit-hide-front" src={assetUrl("/assets/rabbit-island.webp")} alt="" aria-hidden="true" draggable={false}/>
   <img className="rabbit-scenery-occluder rabbit-rock-front" src={assetUrl("/assets/rabbit-island.webp")} alt="" aria-hidden="true" draggable={false}/>

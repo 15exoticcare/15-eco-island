@@ -10,3 +10,5 @@ main[data-exploration-edition="5"] .egg-scenery{position:absolute;inset:0;z-inde
 main[data-exploration-edition="5"] .exploration-directory{max-height:calc(100dvh - 230px);overflow:auto}
 main[data-exploration-edition="5"] .exploration-card .egg-intro{font-size:12px;color:#85927a}
 @media(prefers-reduced-motion:reduce){.egg-animal,.egg-island-hit{animation:none!important;transition:none!important}}
+
+.map-name,.directory .map-name{justify-content:center}.mobile-island-list button{justify-content:center}.mobile-island-list button span{flex:0 0 auto;white-space:nowrap}.mobile-island-list strong{min-width:0;flex:1;padding:0;text-align:center}

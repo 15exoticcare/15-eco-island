@@ -42,23 +42,23 @@ export function animalFrame(r){
  return sequence[Math.min(sequence.length-1,Math.floor(Math.min(t,4200)/4200*sequence.length))];
 }
 
-export function createAnimalLife({seed=1504,onUpdate=()=>{},locomotion=true}={}){
+export function createAnimalLife({seed=1504,onUpdate=()=>{},locomotion=true,profiles=animalProfiles,pathSafe=safeAnimalPath}={}){
  let value=seed>>>0,paused=false,reduced=false,disposed=false,clock=0;
  const random=()=>{value=(Math.imul(value,1664525)+1013904223)>>>0;return value/4294967296;};
- const residents=animalProfiles.map((p,n)=>({id:p.id,island:p.island,position:{...p.zone.nodes[0]},target:null,from:null,state:'rest',elapsed:0,duration:1800+n*1150,reverse:false,facing:'left',attention:false,noticeIn:null,lastNotice:-Infinity,lastVisitVariant:-1,pendingReaction:null,reaction:null}));
+ const residents=profiles.map((p,n)=>({id:p.id,island:p.island,position:{...p.zone.nodes[0]},target:null,from:null,state:'rest',elapsed:0,duration:1800+n*1150,reverse:false,facing:'left',attention:false,noticeIn:null,lastNotice:-Infinity,lastVisitVariant:-1,pendingReaction:null,reaction:null}));
  const snapshot=()=>residents.map(r=>({...r,position:{...r.position},target:r.target?{...r.target}:null,frame:animalFrame(r)}));
  const emit=()=>onUpdate(snapshot());
  const enter=(r,state,duration)=>{r.state=state;r.elapsed=0;r.duration=duration;r.reaction=null;};
- function rest(r){const s=animalProfiles.find(p=>p.id===r.id).species;enter(r,'rest',s.rest[0]+random()*(s.rest[1]-s.rest[0]));}
+ function rest(r){const s=profiles.find(p=>p.id===r.id).species;enter(r,'rest',s.rest[0]+random()*(s.rest[1]-s.rest[0]));}
  function observe(r){const plan=r.pendingReaction;r.pendingReaction=null;r.attention=false;enter(r,plan?.state??'observe',plan?.duration??4600+random()*700);r.reaction=plan;}
  function choose(r){
-  const p=animalProfiles.find(p=>p.id===r.id);
+  const p=profiles.find(p=>p.id===r.id);
   if(r.attention){observe(r);return;}
   const choices=Object.entries(p.species.weights).filter(([s])=>(s!=='move'||locomotion&&p.atlas.movement&&p.atlas.transition)&&(s==='rest'||!residents.some(o=>o!==r&&o.island===r.island&&(o.state===s||s==='move'&&o.state==='prepare'||s==='observe'&&(o.noticeIn!==null||o.attention)))));
   let sample=random()*choices.reduce((sum,[,weight])=>sum+weight,0),action='rest';for(const [s,w] of choices){sample-=w;if(sample<=0){action=s;break;}}
   if(action==='rest'){rest(r);return;}
   if(action==='move'){
-   const others=residents.filter(o=>o!==r&&o.island===r.island),to=p.zone.nodes.find(q=>Math.hypot(q.x-r.position.x,q.y-r.position.y)>8&&safeAnimalPath(r.island,r.id,r.position,q,others));
+   const others=residents.filter(o=>o!==r&&o.island===r.island),to=p.zone.nodes.find(q=>Math.hypot(q.x-r.position.x,q.y-r.position.y)>8&&pathSafe(r.island,r.id,r.position,q,others));
    if(!to){rest(r);return;}
    r.from={...r.position};r.target={...to};r.reverse=to.x>r.position.x;
    // Branch descent plays the gripping sequence in reverse; it never becomes a flight.
@@ -73,10 +73,10 @@ export function createAnimalLife({seed=1504,onUpdate=()=>{},locomotion=true}={})
    for(const r of residents){
     if(r.noticeIn!==null){r.noticeIn-=dt;if(r.noticeIn<=0){r.noticeIn=null;if(['move','prepare','settle'].includes(r.state))r.attention=true;else observe(r);}}
     r.elapsed=Math.min(r.duration,r.elapsed+Math.max(0,dt));
-    if(r.state==='move'&&r.from&&r.target){const p=animalProfiles.find(p=>p.id===r.id),cycles=r.duration/p.species.period,cycle=Math.min(cycles-1,Math.floor(r.elapsed/p.species.period)),phase=Math.min(1,(r.elapsed-cycle*p.species.period)/p.species.period),stride=Math.max(0,Math.min(1,(phase-.125)/.75)),t=(cycle+stride)/cycles;r.position={x:r.from.x+(r.target.x-r.from.x)*t,y:r.from.y+(r.target.y-r.from.y)*t};}
+    if(r.state==='move'&&r.from&&r.target){const p=profiles.find(p=>p.id===r.id),cycles=r.duration/p.species.period,cycle=Math.min(cycles-1,Math.floor(r.elapsed/p.species.period)),phase=Math.min(1,(r.elapsed-cycle*p.species.period)/p.species.period),stride=Math.max(0,Math.min(1,(phase-.125)/.75)),t=(cycle+stride)/cycles;r.position={x:r.from.x+(r.target.x-r.from.x)*t,y:r.from.y+(r.target.y-r.from.y)*t};}
     if(r.elapsed>=r.duration){
      if(r.state==='prepare'){
-      if(r.attention){r.target=null;r.from=null;observe(r);}else{const s=animalProfiles.find(p=>p.id===r.id).species,length=Math.hypot(r.target.x-r.from.x,r.target.y-r.from.y);enter(r,'move',Math.max(1,Math.ceil(length/s.step))*s.period);}
+      if(r.attention){r.target=null;r.from=null;observe(r);}else{const s=profiles.find(p=>p.id===r.id).species,length=Math.hypot(r.target.x-r.from.x,r.target.y-r.from.y);enter(r,'move',Math.max(1,Math.ceil(length/s.step))*s.period);}
      }else if(r.state==='move'){r.position={...r.target};r.target=null;r.from=null;enter(r,'settle',1100);}
      else if(r.attention)observe(r);
      else if(r.state==='rest')choose(r);
