@@ -29,7 +29,7 @@ function Portrait({entry,locked=false}:{entry:GuideEntry;locked?:boolean}){
 }
 function Keepsake({total}:{total:number}){return <div className="guide-keepsake" data-guide-complete="true">
  <span className="guide-seal" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M24 38C7 28 8 12 24 8c16 4 17 20 0 30Z"/><path d="M24 34V16m0 10-7-6m7 10 7-9"/></svg></span>
- <div><span className="eyebrow">{total} 種相遇・一份溫柔收藏</span><h3>壹伍生態探索家</h3><p>恭喜你！已經認識壹伍生態島的每一位小夥伴 ♡</p><small>網站內的探索紀念，非住宿優惠、折價券或實體獎勵。</small></div>
+ <div><span className="eyebrow">{total} 種相遇・一份溫柔收藏</span><h3>壹伍莊園探索家</h3><p>恭喜你！已經認識壹伍特寵小知識莊園的每一位小夥伴 ♡</p><small>網站內的探索紀念，非住宿優惠、折價券或實體獎勵。</small></div>
  </div>}
 
 export default memo(forwardRef<FieldGuideHandle,Props>(function FieldGuide({onNavigate,open:controlledOpen,onOpenChange,showReward=true},ref){
@@ -61,10 +61,10 @@ export default memo(forwardRef<FieldGuideHandle,Props>(function FieldGuide({onNa
   </button>
   {mounted&&createPortal(<>
    <div className="guide-toast" role="status" aria-live="polite" aria-atomic="true">{newFriend&&<span key={toast?.serial}>發現新朋友！{newFriend.name}圖鑑已解鎖{complete?`・${total} 種相遇，探索紀念卡已收藏`:''}</span>}</div>
-   {reward&&!open&&showReward&&<section className="guide-reward-floating" aria-label="壹伍生態探索家紀念卡"><button aria-label="收好探索紀念卡" onClick={()=>setReward(false)}>×</button><Keepsake total={total}/></section>}
+   {reward&&!open&&showReward&&<section className="guide-reward-floating" aria-label="壹伍莊園探索家紀念卡"><button aria-label="收好探索紀念卡" onClick={()=>setReward(false)}>×</button><Keepsake total={total}/></section>}
    {open&&<section id="field-guide" className="field-guide" role="dialog" aria-modal="false" aria-labelledby="guide-title" data-guide-count={count}>
     <header className="guide-header"><div><span className="eyebrow">YIWU · FIELD NOTES</span><h2 id="guide-title">動物探索圖鑑</h2></div><button ref={closeButton} className="guide-close" aria-label="收合探索圖鑑，返回地圖" onClick={()=>close()}>×</button>
-     <p className="guide-progress-copy">已發現 <strong>{count}／{total}</strong> 種生態島小夥伴</p><progress aria-label="探索完成進度" value={count} max={total}/>
+     <p className="guide-progress-copy">已發現 <strong>{count}／{total}</strong> 種莊園小夥伴</p><progress aria-label="探索完成進度" value={count} max={total}/>
     </header>
     <div className="guide-body" ref={body}>
      {entry&&view.ids.includes(entry.id)?<article className="guide-detail" data-guide-detail={entry.id}>
