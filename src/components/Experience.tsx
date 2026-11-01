@@ -1,6 +1,6 @@
 'use client';
 import {assetUrl} from '../lib/public-assets.mjs';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { islands, bridgePaths, world as legacyWorld, type IslandId, type Point } from '@/lib/islands';
 import { createPatrol, createPatrolLoop, type Patrol, type PatrolState } from '@/lib/patrol.mjs';
 import {MobileNavigation,MobilePanel,MobileSheetHeading,NavIcon,type Panel} from './MobileChrome';
@@ -40,9 +40,11 @@ type Camera = {
     y: number;
     scale: number;
 };
-export default function Experience({artPreview=false,artExpansion=false,artFinal=false,eggPreview=false}:{artPreview?:boolean;artExpansion?:boolean;artFinal?:boolean;eggPreview?:boolean}) {return <ArtDirection.Provider value={artPreview}><ArtExpansion.Provider value={artExpansion}><ArtFinal.Provider value={artFinal}><ArtExploration.Provider value={eggPreview}><ExperienceScene artPreview={artPreview} artExpansion={artExpansion} artFinal={artFinal} eggPreview={eggPreview}/></ArtExploration.Provider></ArtFinal.Provider></ArtExpansion.Provider></ArtDirection.Provider>}
-function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPreview:boolean;artExpansion:boolean;artFinal:boolean;eggPreview:boolean}) {
-    const world=eggPreview?eggWorld:legacyWorld,explorationVisitors=eggPreview?eggIslands:legacyVisitors;
+export type MapExtension={world:typeof eggWorld;scene:ReactNode;focus?:{serial:number;x:number;y:number;width:number;height:number}};
+export default function Experience({artPreview=false,artExpansion=false,artFinal=false,eggPreview=false,extension}:{artPreview?:boolean;artExpansion?:boolean;artFinal?:boolean;eggPreview?:boolean;extension?:MapExtension}) {return <ArtDirection.Provider value={artPreview}><ArtExpansion.Provider value={artExpansion}><ArtFinal.Provider value={artFinal}><ArtExploration.Provider value={eggPreview}><ExperienceScene artPreview={artPreview} artExpansion={artExpansion} artFinal={artFinal} eggPreview={eggPreview} extension={extension}/></ArtExploration.Provider></ArtFinal.Provider></ArtExpansion.Provider></ArtDirection.Provider>}
+function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}:{artPreview:boolean;artExpansion:boolean;artFinal:boolean;eggPreview:boolean;extension?:MapExtension}) {
+    const world=extension?.world??(eggPreview?eggWorld:legacyWorld),worldRef=useRef(world);worldRef.current=world;
+    const explorationVisitors=eggPreview?eggIslands:legacyVisitors;
     const [selectedVisitorActor,setSelectedVisitorActor]=useState<string|null>(null),[eggFocus,setEggFocus]=useState<string|null>(null);
     const artFocus=artFinal?finalFocus:artExpansion?expansionFocus:dioramaFocus;
     const artPaths=artFinal?finalPaths:artExpansion?expansionPaths:dioramaPaths,artSpans=artFinal?finalSpans:artExpansion?expansionSpans:dioramaSpans,artWalkways=artFinal?finalWalkways:artExpansion?expansionWalkways:dioramaWalkways,artOffsets:Record<string,Point>=artFinal?finalOffsets:expansionOffsets;
@@ -79,13 +81,14 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
         if(!mobileRef.current)setCamera(c);
     }
     function update(c: Camera) {
+        const world=worldRef.current;
         const r=viewport.current?.getBoundingClientRect();
-        if(mobileRef.current&&r){const scale=Math.max(Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.86,Math.min(1.65,c.scale));
+        if((mobileRef.current||(world!==eggWorld&&world!==legacyWorld))&&r){const scale=Math.max(Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.86,Math.min(1.65,c.scale));
             c={scale,x:Math.max(r.width*.5-(world.center.x+world.bounds.width*.5)*scale,Math.min(r.width*.5-(world.center.x-world.bounds.width*.5)*scale,c.x)),y:Math.max(r.height*.5-(world.center.y+world.bounds.height*.5)*scale,Math.min(r.height*.5-(world.center.y-world.bounds.height*.5)*scale,c.y))};}
         cameraRef.current=c;
         if(cameraFrame.current===null)cameraFrame.current=requestAnimationFrame(paintCamera);
     }
-    function fit(full=false) {setEggFocus(null);const r=measure();if(!r)return;const fitted=Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.96;
+    function fit(full=false) {const world=worldRef.current;setEggFocus(null);const r=measure();if(!r)return;const fitted=Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.96;
         const scale=mobileRef.current&&!full?Math.max(fitted,Math.min(.24,r.height/(world.bounds.height*.95))):fitted;
         setSmooth(true);update({x:r.width/2-world.center.x*scale,y:r.height/2-world.center.y*scale,scale});}
     useEffect(()=>{const query=matchMedia('(max-width:849px), (max-height:500px) and (pointer:coarse)');
@@ -110,9 +113,10 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
         setSmooth(true);update({scale,x:width/2-point.x*scale,y:top+height*.5-point.y*scale});}
     reframe.current=()=>{if(!mobileRef.current)return;if(panel==='visitor'&&selectedExploration)focusExploration(selectedExploration);else if(selected&&['island','rabbit','animal'].includes(panel??''))frameMobile(selected,panel==='rabbit'&&selectedRabbit?`[data-rabbit="${selectedRabbit}"]`:panel==='animal'&&selectedAnimal?`[data-animal="${selectedAnimal}"]`:undefined);};
     useEffect(()=>{if(!mobile)return;const timer=requestAnimationFrame(()=>reframe.current());return()=>cancelAnimationFrame(timer);},[panel,panelHeight,mobile,selected,selectedRabbit,selectedAnimal,selectedExploration,viewportSize.width,viewportSize.height]);
-    function zoom(factor:number,cx?:number,cy?:number){const r=viewport.current?.getBoundingClientRect();if(!r)return;const c=cameraRef.current;
+    function mapZoomAt(c:Camera,factor:number,x:number,y:number){const w=worldRef.current,r=viewport.current?.getBoundingClientRect();if(!r||w===eggWorld||w===legacyWorld)return zoomAt(c,factor,x,y);const scale=Math.max(Math.min(r.width/w.bounds.width,r.height/w.bounds.height)*.86,Math.min(1.65,c.scale*factor));return{scale,x:x-(x-c.x)*scale/c.scale,y:y-(y-c.y)*scale/c.scale};}
+    function zoom(factor:number,cx?:number,cy?:number){const world=worldRef.current;const r=viewport.current?.getBoundingClientRect();if(!r)return;const c=cameraRef.current;
         if(mobileRef.current)factor=Math.max(Math.min(r.width/world.bounds.width,r.height/world.bounds.height)*.86,Math.min(1.65,c.scale*factor))/c.scale;
-        update(zoomAt(c,factor,cx??r.width/2,cy??r.height/2));}
+        update(mapZoomAt(c,factor,cx??r.width/2,cy??r.height/2));}
     function focus(id: IslandId, preserveRabbit = false) { setEggFocus(null); if (!preserveRabbit) {
         setSelectedRabbit(null);
         setSelectedAnimal(null);
@@ -191,8 +195,11 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
         setExplorationMenu(false);
         setPanel(null);requestAnimationFrame(()=>focusExploration(id));
     } requestAnimationFrame(() => viewport.current?.focus({ preventScroll: true })); }, []);
+    const previousExtension=useRef(false);
+    useEffect(()=>{if(extension||previousExtension.current){clearPanel();setSelected(null);fit(true);}previousExtension.current=!!extension;},[world]);
+    useEffect(()=>{const f=extension?.focus,r=viewport.current?.getBoundingClientRect();if(!f||!r)return;clearPanel();setSmooth(false);const scale=Math.min(r.width/f.width,r.height/f.height)*.88;update({scale,x:r.width/2-f.x*scale,y:r.height/2-f.y*scale});},[extension?.focus?.serial]);
     const current = islands.find(i => i.id === selected);
-    return <main data-art={artPreview?'diorama':'classic'} data-art-stage={artFinal?4:artExpansion?3:1} data-exploration-edition={eggPreview?5:1} data-mobile={mobile} data-panel={panel??'none'} onKeyDown={e => { if (e.key === 'Escape') { clearPanel();
+    return <main data-map-extension={extension?'defense':undefined} data-art={artPreview?'diorama':'classic'} data-art-stage={artFinal?4:artExpansion?3:1} data-exploration-edition={eggPreview?5:1} data-mobile={mobile} data-panel={panel??'none'} onKeyDown={e => { if (e.key === 'Escape') { clearPanel();
         setSelectedRabbit(null);
         setSelectedAnimal(null);
         setExplorationMenu(false);
@@ -219,7 +226,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
         return; gesture.current.moved = true; e.currentTarget.setPointerCapture(e.pointerId); const previous = pointers.current.get(e.pointerId)!; pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); const a = [...pointers.current.values()]; if (a.length === 2) {
         const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), r = e.currentTarget.getBoundingClientRect();
         if (gesture.current.distance) {
-            const mid = { x: (a[0].x + a[1].x) / 2 - r.left, y: (a[0].y + a[1].y) / 2 - r.top }, dx = (e.clientX - previous.x) / 2, dy = (e.clientY - previous.y) / 2, c = zoomAt(cameraRef.current, d / gesture.current.distance, mid.x - dx, mid.y - dy);
+            const mid = { x: (a[0].x + a[1].x) / 2 - r.left, y: (a[0].y + a[1].y) / 2 - r.top }, dx = (e.clientX - previous.x) / 2, dy = (e.clientY - previous.y) / 2, c = mapZoomAt(cameraRef.current, d / gesture.current.distance, mid.x - dx, mid.y - dy);
             update({ ...c, x: c.x + dx, y: c.y + dy });
         }
         gesture.current.distance = d;
@@ -232,6 +239,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview}:{artPrevi
    <div className="cloud cloud-one" ref={cloudOne}/><div className="cloud cloud-two" ref={cloudTwo}/>
    <div className={`world ${smooth ? 'smooth' : ''}`} ref={worldElement} style={{width:world.width,height:world.height}}>
     {artPreview&&artExpansion&&<DioramaExpansion/>}
+    {extension?.scene}
     {artFinal&&<DioramaFinal/>}
     {artPreview&&<DioramaGround/>}
     {artFinal&&<DioramaFinal front/>}
