@@ -73,9 +73,12 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}
         setViewportSize(previous=>previous.width===r.width&&previous.height===r.height?previous:{ width: r.width, height: r.height }); return r; }
     const pointers = useRef(new Map<number, Point>()), gesture = useRef({ x: 0, y: 0, distance: 0, moved: false }), cameraTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     function settleHitScale(){worldElement.current?.style.setProperty('--map-scale',String(cameraRef.current.scale));}
-    function paintCamera(){cameraFrame.current=null;const c=cameraRef.current,element=worldElement.current;if(!element)return;
+    function paintCamera(time:number){cameraFrame.current=null;const c=cameraRef.current,element=worldElement.current;if(!element)return;
         element.style.transform=`translate(${c.x}px,${c.y}px) scale(${c.scale})`;
         settleHitScale();if(!element.dataset.cameraReady)element.dataset.cameraReady='true';
+        // Optional battle overlay paints in this same frame, after the DOM camera.
+        // The ordinary exploration map has no listener and emits no battle event.
+        if(worldRef.current!==eggWorld&&worldRef.current!==legacyWorld)viewport.current?.dispatchEvent(new CustomEvent('td-camera-paint',{detail:{...c,time}}));
         if(cloudOne.current)cloudOne.current.style.transform=`translate(${c.x*.08}px,${c.y*.08}px)`;
         if(cloudTwo.current)cloudTwo.current.style.transform=`translate(${c.x*.04}px,${c.y*.04}px)`;
         if(!mobileRef.current)setCamera(c);

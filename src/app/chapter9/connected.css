@@ -1,0 +1,7 @@
+.chapter9-shell .td-score .td-goal{font-size:11px;color:#678a82;background:#edf3e8;border:0;border-radius:6px;padding:5px 7px;margin-top:3px}.chapter9-shell .td-result h2{font-size:24px}.chapter9-shell .td-mode-switch span{border-color:#b8c8a9}.chapter9-shell .td-camera-tools button[aria-pressed=true]{background:#e2eddf;border-color:#8fa487}.chapter9-shell .td-pad-directory{max-width:calc(100% - 48px)}
+@media(max-width:849px){.chapter9-shell .td-camera-tools{top:calc(242px + env(safe-area-inset-top,0px))}.chapter9-shell .td-welcome{top:calc(293px + env(safe-area-inset-top,0px));max-height:calc(100dvh - 395px)}.chapter9-shell .td-score .td-goal{font-size:10px}.chapter9-shell .td-pad-directory{max-width:calc(100% - 24px)}.chapter9-shell .td-interface:has(.td-build-panel) .td-announcement{top:291px}.chapter9-shell .td-build-panel{max-height:37dvh}.chapter9-shell .td-announcement{font-size:12px}.chapter9-shell .td-result h2{font-size:21px}}
+@media(max-height:500px) and (orientation:landscape){.chapter9-shell .td-score .td-goal{display:none}.chapter9-shell .td-camera-tools{top:116px}.chapter9-shell .td-welcome{top:160px;bottom:90px;max-height:none}}
+
+/* A compositor-only CSS transition cannot synchronize with a viewport canvas.
+   Defense uses the existing frame-driven camera; exploration keeps its easing. */
+.chapter9-shell main[data-map-extension=defense] .world{transition:none}
