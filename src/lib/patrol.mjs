@@ -18,6 +18,7 @@ export function createPatrol(paths,onUpdate,route=findRoute){
  const order=buildPatrolOrder(paths,route),home=Object.values(paths)[0][0];
  let state={location:'main',target:null,phase:'wait',position:{...home},distance:0,direction:'front',automatic:true,paused:false,pending:null};
  let index=0,remaining=0,path=[],total=0;
+ const holds=new Set();
  const snapshot=()=>({...state,position:{...state.position},nextStop:state.pending??(state.phase==='walk'?state.target:order[index])});
  const emit=()=>onUpdate(snapshot());
  function depart(id,automatic){
@@ -25,7 +26,7 @@ export function createPatrol(paths,onUpdate,route=findRoute){
   state={...state,target:id,phase:'walk',distance:0,automatic};emit();
  }
  function dispatchManual(){
-  if(state.paused||state.pending===null)return;
+  if(state.paused||holds.size||state.pending===null)return;
   const id=state.pending;state.pending=null;
   if(id===state.location){state.automatic=false;remaining=6000;emit();}
   else depart(id,false);
@@ -33,8 +34,10 @@ export function createPatrol(paths,onUpdate,route=findRoute){
  return {
   order,
   snapshot,
+  checkpoint:()=>({state:snapshot(),index,remaining,path:path.map(p=>({...p})),total}),
+  hold(){const token=Symbol();holds.add(token);let released=false;return()=>{if(released)return;released=true;holds.delete(token);emit();}},
   tick(dt){
-   if(state.paused)return;
+   if(state.paused||holds.size)return;
    if(state.phase==='wait'){
     if(state.pending!==null){dispatchManual();return;}
     remaining=Math.max(0,remaining-dt);

@@ -41,8 +41,8 @@ type Camera = {
     scale: number;
 };
 export type MapExtension={world:typeof eggWorld;scene:ReactNode;focus?:{serial:number;x:number;y:number;width:number;height:number}};
-export default function Experience({artPreview=false,artExpansion=false,artFinal=false,eggPreview=false,extension}:{artPreview?:boolean;artExpansion?:boolean;artFinal?:boolean;eggPreview?:boolean;extension?:MapExtension}) {return <ArtDirection.Provider value={artPreview}><ArtExpansion.Provider value={artExpansion}><ArtFinal.Provider value={artFinal}><ArtExploration.Provider value={eggPreview}><ExperienceScene artPreview={artPreview} artExpansion={artExpansion} artFinal={artFinal} eggPreview={eggPreview} extension={extension}/></ArtExploration.Provider></ArtFinal.Provider></ArtExpansion.Provider></ArtDirection.Provider>}
-function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}:{artPreview:boolean;artExpansion:boolean;artFinal:boolean;eggPreview:boolean;extension?:MapExtension}) {
+export default function Experience({artPreview=false,artExpansion=false,artFinal=false,eggPreview=false,guardianSupport=false,extension}:{guardianSupport?:boolean;artPreview?:boolean;artExpansion?:boolean;artFinal?:boolean;eggPreview?:boolean;extension?:MapExtension}) {return <ArtDirection.Provider value={artPreview}><ArtExpansion.Provider value={artExpansion}><ArtFinal.Provider value={artFinal}><ArtExploration.Provider value={eggPreview}><ExperienceScene artPreview={artPreview} artExpansion={artExpansion} artFinal={artFinal} eggPreview={eggPreview} guardianSupport={guardianSupport} extension={extension}/></ArtExploration.Provider></ArtFinal.Provider></ArtExpansion.Provider></ArtDirection.Provider>}
+function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,guardianSupport,extension}:{guardianSupport:boolean;artPreview:boolean;artExpansion:boolean;artFinal:boolean;eggPreview:boolean;extension?:MapExtension}) {
     const world=extension?.world??(eggPreview?eggWorld:legacyWorld),worldRef=useRef(world);worldRef.current=world;
     const explorationVisitors=eggPreview?eggIslands:legacyVisitors;
     const [selectedVisitorActor,setSelectedVisitorActor]=useState<string|null>(null),[eggFocus,setEggFocus]=useState<string|null>(null);
@@ -51,6 +51,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}
     const [panel,setPanel] = useState<Panel>(null), [mobile,setMobile] = useState(false), [panelHeight,setPanelHeight] = useState(0);
     const mobileRef=useRef(false), panelRef=useRef<Panel>(null), sheet=useRef<HTMLDivElement>(null), reframe=useRef<()=>void>(()=>{});
     panelRef.current=panel;
+    const keeperLayer=useRef<HTMLDivElement>(null);
     const worldElement=useRef<HTMLDivElement>(null),cloudOne=useRef<HTMLDivElement>(null),cloudTwo=useRef<HTMLDivElement>(null),cameraFrame=useRef<number|null>(null),caretaker=useRef<CaretakerHandle|null>(null);
     const viewport = useRef<HTMLDivElement>(null), cameraRef = useRef<Camera>({ x: 0, y: 0, scale: 1 });
     const [camera, setCamera] = useState<Camera>(cameraRef.current), [selected, setSelected] = useState<IslandId | null>(null), [smooth, setSmooth] = useState(false), [help, setHelp] = useState(false);
@@ -66,6 +67,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}
     const explorationRef = useRef<string | null>(null);
     explorationRef.current = selectedExploration;
     const explorationReturn = useRef<string | null>(null);
+    const keeperBorrowed=useRef(false);
     const patrol = useRef<Patrol | null>(null), selectedRef = useRef<IslandId | null>(selected);
     selectedRef.current = selected;
     const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
@@ -75,6 +77,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}
     function settleHitScale(){worldElement.current?.style.setProperty('--map-scale',String(cameraRef.current.scale));}
     function paintCamera(time:number){cameraFrame.current=null;const c=cameraRef.current,element=worldElement.current;if(!element)return;
         element.style.transform=`translate(${c.x}px,${c.y}px) scale(${c.scale})`;
+        if(keeperLayer.current)keeperLayer.current.style.transform=element.style.transform;
         settleHitScale();if(!element.dataset.cameraReady)element.dataset.cameraReady='true';
         // Optional battle overlay paints in this same frame, after the DOM camera.
         // The ordinary exploration map has no listener and emits no battle event.
@@ -144,7 +147,7 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}
                 setVisitCaption(null);
             previousPhase = state.phase;
             const moving=state.phase==='walk'&&!state.paused;
-            caretaker.current?.update({position:state.position,direction:state.direction,distance:state.distance,walking:moving,observing:state.phase==='wait'&&state.location!=='main'});
+            if(!keeperBorrowed.current)caretaker.current?.update({position:state.position,direction:state.direction,distance:state.distance,walking:moving,observing:state.phase==='wait'&&state.location!=='main'});
             setPatrolState(previous => previous && previous.location === state.location && previous.target === state.target && previous.phase === state.phase && previous.automatic === state.automatic && previous.paused === state.paused && previous.pending === state.pending && previous.nextStop === state.nextStop ? previous : state);
         },artFinal?findGardenRoute:undefined);
         patrol.current = controller;
@@ -154,6 +157,14 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}
         visibility();
         return () => { document.removeEventListener('visibilitychange', visibility); loop.dispose(); patrol.current = null; };
     }, []);
+    // Optional same-actor lease. The existing controller retains its private route and dwell clock.
+    useEffect(()=>{const map=viewport.current;if(!map)return;let owner:symbol|null=null,release:(()=>void)|null=null;
+        const listener=(event:Event)=>{const d=(event as CustomEvent).detail;if(!d||!patrol.current||!caretaker.current)return;
+            if(d.action==='acquire'&&!owner){owner=d.owner;keeperBorrowed.current=true;release=patrol.current.hold();d.snapshot=patrol.current.checkpoint();d.accepted=true;}
+            else if(d.owner===owner&&d.action==='visual')caretaker.current.update(d.visual);
+            else if(d.owner===owner&&d.action==='release'){keeperBorrowed.current=false;owner=null;release?.();release=null;const s=patrol.current.snapshot();caretaker.current.update({position:s.position,direction:s.direction,distance:s.distance,walking:s.phase==='walk'&&!s.paused,observing:s.phase==='wait'&&s.location!=='main'});d.restored=patrol.current.checkpoint();}
+        };map.addEventListener('manor-keeper-lease',listener);return()=>{keeperBorrowed.current=false;release?.();map.removeEventListener('manor-keeper-lease',listener)};
+    },[]);
     function visit(id: IslandId) {
         const controller = patrol.current;
         if (!controller || !controller.requestManual(id))
@@ -255,9 +266,10 @@ function ExperienceScene({artPreview,artExpansion,artFinal,eggPreview,extension}
     </div>)}
     {eggPreview?<EggScenery paused={lifePaused} active={selectedExploration} activeActor={selectedVisitorActor} visit={explorationVisit} onSelect={selectExploration}/>:<ExplorationScenery paused={lifePaused} active={selectedExploration} visit={explorationVisit} onSelect={selectExploration} offsets={artFinal?finalVisitorOffsets:undefined}/>}
     <AnimalLife paused={lifePaused} controllerRef={animals} onSelect={selectAnimal}/>
-    <Bridges spans={artPreview?artSpans:undefined}/><Walkways routes={artPreview?artWalkways:undefined}/><LiveCaretaker ref={caretaker}/><Bridges front spans={artPreview?artSpans:undefined}/>
+    <Bridges spans={artPreview?artSpans:undefined}/><Walkways routes={artPreview?artWalkways:undefined}/>{!guardianSupport&&<LiveCaretaker ref={caretaker}/>}<Bridges front spans={artPreview?artSpans:undefined}/>
     <div className="world-note">一個區域，一種專屬的溫柔。</div>
    </div>
+   {guardianSupport&&<div ref={keeperLayer} className="guardian-actor-layer"><LiveCaretaker ref={caretaker}/></div>}
   </div>
   <div className="desktop-island-labels"><IslandLabels directory={eggPreview&&!!eggFocus} offsets={artFinal?finalLabelOffsets:artExpansion?expansionLabelOffsets:undefined} spans={artExpansion?artSpans:undefined} camera={camera} viewport={viewportSize} selected={selected} smooth={smooth} onSelect={focus}/></div>
   <div className="map-tools" aria-label="地圖控制"><button onClick={() => { setSmooth(true); zoom(1.25); }} aria-label="放大">＋</button><span>{Math.round(camera.scale * 100)}%</span><button onClick={() => { setSmooth(true); zoom(.8); }} aria-label="縮小">−</button><div /><button onClick={() => { clearPanel(); fit(true); setSelectedExploration(null); setExplorationMenu(false); setSelected(null); setSelectedRabbit(null); setSelectedAnimal(null); }} aria-label="返回全景">⌖</button><button onClick={() => {setPanel(null);setHelp(!help);}} aria-label="操作說明">?</button><button className="motion-toggle" onClick={() => setLifePaused(!lifePaused)} aria-label={lifePaused ? '播放環境微動畫' : '暫停環境微動畫'} aria-pressed={lifePaused}>{lifePaused ? '▷' : 'Ⅱ'}</button><button className="exploration-tool" aria-label="尋找周邊小訪客" aria-expanded={explorationMenu} aria-controls="exploration-directory" onClick={() => {setPanel(null);setExplorationMenu(!explorationMenu);}}>✧</button><FieldGuide ref={guide} onNavigate={navigateGuide} open={panel==='guide'} onOpenChange={changeGuide} showReward={!mobile||!panel}/></div>

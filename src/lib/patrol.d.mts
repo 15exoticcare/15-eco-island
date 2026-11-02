@@ -2,7 +2,7 @@ import type {Facing} from './animation.mjs';
 type Point={x:number;y:number};
 type Paths=Record<string,Point[]>;
 export type PatrolState={location:string;target:string|null;phase:'walk'|'wait';position:Point;distance:number;direction:Facing;automatic:boolean;paused:boolean;pending:string|null;nextStop:string};
-export type Patrol={order:string[];snapshot:()=>PatrolState;tick:(dt:number)=>void;requestManual:(id:string)=>boolean;setPaused:(paused:boolean)=>void};
+export type Patrol={order:string[];snapshot:()=>PatrolState;checkpoint:()=>{state:PatrolState;index:number;remaining:number;path:Point[];total:number};hold:()=>()=>void;tick:(dt:number)=>void;requestManual:(id:string)=>boolean;setPaused:(paused:boolean)=>void};
 type RouteFinder=(from:string,to:string,paths:Paths)=>Point[];
 export function buildPatrolOrder(paths:Paths,route?:RouteFinder):string[];
 export function createPatrol(paths:Paths,onUpdate:(state:PatrolState)=>void,route?:RouteFinder):Patrol;
