@@ -1,0 +1,3 @@
+import {AudioManager as BaseManager} from '../chapter11/audio.ts';import {bosses,isBoss} from './bosses.ts';export {audioKey,defaults,parseAudio,type Preferences} from '../chapter11/audio.ts';
+// Reuse the same context, compressor, voice cap, preferences and rate limiter.
+export class AudioManager extends BaseManager{play(type:string,kind=''){const before=new Set(this.voices),boss=isBoss(kind)?bosses[kind]:null,mapped=type==='boss-warning'?'charge':type==='boss-phase'?'shield':type==='boss-skill'?'support-impact':type==='guards'?'split':type==='royal-shield'?'shield':type;const ok=super.play(mapped,kind);if(ok&&boss&&this.context)for(const voice of this.voices)if(!before.has(voice))voice.osc.detune.setValueAtTime((boss.cue-4)*75,this.context.currentTime);return ok}}
