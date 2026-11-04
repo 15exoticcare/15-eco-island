@@ -8,3 +8,6 @@
 
 .manor-production~.c11-sound-entry{left:370px}
 @media(max-width:849px){.manor-production~.c11-sound-entry{left:auto}}
+
+.c11-sound-entry.c11-home-sound{top:28px;left:auto;right:max(20px,env(safe-area-inset-right,0px))}.manor-home-brand{padding-right:90px}
+@media(max-width:849px){.c11-sound-entry.c11-home-sound{top:max(18px,env(safe-area-inset-top,0px));right:18px}.manor-home-brand{padding-right:80px}.manor-home-brand>span{min-width:0}}

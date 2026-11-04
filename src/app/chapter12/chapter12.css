@@ -1,1 +1,10 @@
 .chapter12-shell .c12-boss-preview{display:flex;align-items:center;gap:12px;padding:12px;background:#ecebdd;border-radius:16px}.c12-boss-preview img{width:80px;height:80px;object-fit:contain}.c12-boss-preview p{margin:0}.c12-metrics{font-size:12px;color:#67735e}.c11-boss-bar progress{accent-color:var(--boss-color,#b4c9cf)}
+/* Keep the close control outside the scrolling contents and above map paint. */
+.chapter12-shell .td-build-panel{display:flex;flex-direction:column;overflow:hidden;isolation:isolate;padding:0;z-index:3}
+.chapter12-shell .td-build-panel>header{position:relative;inset:auto;flex:none;min-height:64px;margin:0;padding:10px 14px;gap:8px;background:#fffcf4;color:#4f604f;border-bottom:1px solid #d2d7c3;z-index:1}
+.chapter12-shell .td-build-panel h3{margin:3px 0;font-size:19px}
+.chapter12-shell .td-build-panel .td-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0;color:#40573f;background:#e4ecdc;border:1px solid #9baa91;font-size:24px;opacity:1;position:relative;z-index:2;touch-action:manipulation}
+.td-build-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px;-webkit-overflow-scrolling:touch}
+.td-build-content>.td-primary{width:100%;margin-bottom:10px}
+@media(max-width:849px){.chapter12-shell .td-build-panel{top:auto;bottom:calc(145px + env(safe-area-inset-bottom,0px));max-height:min(38dvh,calc(100dvh - 325px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))}.chapter12-shell .td-build-panel>header{min-height:56px;padding:6px 10px}.chapter12-shell .td-build-panel h3{font-size:17px}.td-build-content{padding:10px}}
+@media(max-height:500px) and (orientation:landscape){.chapter12-shell .td-build-panel{top:115px;bottom:calc(90px + env(safe-area-inset-bottom,0px));max-height:none;width:300px;left:auto;right:12px}}

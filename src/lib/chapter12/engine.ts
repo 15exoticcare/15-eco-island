@@ -50,7 +50,7 @@ export function createCampaign(level:Level){
    if(spec.mode==='burst'){if(t.burstLeft===0)t.burstLeft=(spec.burstCount??1)-1;else t.burstLeft--;t.cooldown=t.burstLeft?(spec.burstGap??.1):spec.interval}else t.cooldown=spec.interval;
   }
   s.shots=s.shots.filter(shot=>{const target=s.enemies.find(e=>e.id===shot.target&&e.hp>0);if(!target)return false;const p=position(target),d=Math.hypot(p.x-shot.x,p.y-shot.y);if(d<=shot.speed*dt+8)return impact(shot,target);const travel=shot.speed*dt;shot.x+=(p.x-shot.x)/d*travel;shot.y+=(p.y-shot.y)/d*travel;shot.distance+=travel;return true});
-  s.enemies=s.enemies.filter(e=>e.hp>0);s.effects=s.effects.filter(e=>s.time-e.born<rules.effectDuration);if(!s.queue.length&&!s.enemies.length&&!s.effects.length){s.shots=[];s.completedWaves=s.wave;s.waveStats.at(-1)!.ended=s.time;if(s.wave<level.waves.length){s.coins+=rules.waveReward;s.earned+=rules.waveReward;signal('wave-reward')}s.status=s.wave===level.waves.length?'won':'planning';if(s.status==='won')signal('won');s.support=null;changed()}
+  s.enemies=s.enemies.filter(e=>e.hp>0);s.effects=s.effects.filter(e=>s.time-e.born<rules.effectDuration);if(!s.queue.length&&!s.enemies.length&&!s.effects.some(e=>e.kind!=='aura')){s.shots=[];s.completedWaves=s.wave;s.waveStats.at(-1)!.ended=s.time;if(s.wave<level.waves.length){s.coins+=rules.waveReward;s.earned+=rules.waveReward;signal('wave-reward')}s.status=s.wave===level.waves.length?'won':'planning';if(s.status==='won')signal('won');s.support=null;changed()}
  }
  return{get state(){return s},level,route,start,restart,nextWave,pause,resume,build,upgrade,upgradeCost,stats,tick,target,summon,cancelSupport};
 }

@@ -2,6 +2,7 @@
 
 import {useRef, useState} from 'react';
 import dynamic from 'next/dynamic';
+import {SoundProvider} from '@/components/chapter12/Sound';
 import {assetUrl} from '@/lib/public-assets.mjs';
 
 const Session = dynamic(() => import('./ManorSession'), {
@@ -16,9 +17,7 @@ export default function ManorHome() {
     setMode(null);
     requestAnimationFrame(() => explore.current?.focus({preventScroll: true}));
   }
-  if (mode) return <Session initialMode={mode} onHome={home}/>;
-
-  return <main className="manor-home" data-manor-home>
+  return <SoundProvider home={!mode}>{mode?<Session initialMode={mode} onHome={home}/>:<main className="manor-home" data-manor-home>
     <div className="manor-home-inner">
       <header className="manor-home-brand">
         <img src={assetUrl('/assets/logo-original.jpg')} alt="壹伍非犬貓旅宿原始商標" width="64" height="64"/>
@@ -51,5 +50,5 @@ export default function ManorHome() {
       </div>
       <footer className="manor-home-footer">探索、通關與聲音偏好保存在此瀏覽器；切換模式不會清除紀錄。</footer>
     </div>
-  </main>;
+  </main>}</SoundProvider>;
 }

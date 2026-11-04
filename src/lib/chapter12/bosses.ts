@@ -12,7 +12,7 @@ const rows:[BossId,string,string,string,number,number,string,string][]=[
  ['crystal','chinchilla','岩晶巨獸王','#aba4c4',3000,68,'crystal','七成與三成五生命各開一次岩晶護盾，限時碎光'],
  ['king','glider','史萊姆國王','#b4c9cf',3200,72,'king','皇家護盾、六位護衛、預警衝刺與第二階段']
 ];
-export const bosses=Object.fromEntries(rows.map(([id,level,name,color,hp,speed,ability,description],i)=>[id,{id,level,name,color,hp,speed,reward:130+i*10,leak:20,ability,description,art:id==='king'?'/assets/chapter11/slime-king.webp':`/assets/chapter12/boss-${id}.webp`,shield:id==='crystal'?280:id==='pine'?160:id==='king'?140:100,shieldSeconds:id==='crystal'?7:6,summonLimit:id==='clover'?4:id==='sunflower'||id==='king'?6:0,phaseAt:.5,maxCasts:id==='berry'?6:4,cooldown:12,warning:1.5,duration:3,cue:i}])) as Record<BossId,BossSpec>;
+export const bosses=Object.fromEntries(rows.map(([id,level,name,color,hp,speed,ability,description],i)=>[id,{id,level,name,color,hp:Math.round(hp*({clover:1.12,berry:1.14,feather:1.16,sunflower:1.16,pine:1.18,lightning:1.18,dune:1.20,crystal:1.22,king:1.25}[id])),speed,reward:130+i*10,leak:20,ability,description,art:id==='king'?'/assets/chapter11/slime-king.webp':`/assets/chapter12/boss-${id}.webp`,shield:id==='crystal'?280:id==='pine'?160:id==='king'?140:100,shieldSeconds:id==='crystal'?7:6,summonLimit:id==='clover'?4:id==='sunflower'||id==='king'?6:0,phaseAt:.5,maxCasts:id==='berry'?6:4,cooldown:12,warning:1.5,duration:3,cue:i}])) as Record<BossId,BossSpec>;
 export const isBoss=(kind:string):kind is BossId=>bossIds.includes(kind as BossId);
 export const bossForLevel=(id:string)=>Object.values(bosses).find(b=>b.level===id);
 

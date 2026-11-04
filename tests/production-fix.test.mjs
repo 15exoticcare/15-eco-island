@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {createCampaign} from '../src/lib/chapter12/engine.ts';
+import {levels} from '../src/lib/chapter12/levels.ts';
+import {supportRules} from '../src/lib/chapter12/balance.ts';
+const step=(g,seconds)=>{for(let i=0;i<Math.round(seconds/.05);i++)g.tick(.05)};
+assert.equal(supportRules.cooldown,15);assert.equal(supportRules.duration,4.4);assert.equal(supportRules.damage,160);assert.equal(supportRules.bossDamage,65);
+const l=levels[0],g=createCampaign({...l,waves:[Array(80).fill('purple')],spawnDelays:[Array(80).fill(1)]});g.start();g.nextWave();step(g,.05);const p=g.route.point(500);assert(g.summon(p));const started=g.state.time;assert.equal(g.state.supportReadyAt,started+15);assert(!g.summon(p));step(g,1);g.pause();const frozen={time:g.state.time,support:JSON.stringify(g.state.support),ready:g.state.supportReadyAt};step(g,60);assert.equal(g.state.time,frozen.time);assert.equal(JSON.stringify(g.state.support),frozen.support);assert.equal(g.state.supportReadyAt,frozen.ready);g.resume();step(g,3.45);assert.equal(g.state.support,null);assert(!g.summon(p));step(g,10.45);assert(!g.summon(p));step(g,.1);assert(g.summon(p));assert(!g.summon(p));g.restart();assert.equal(g.state.supportReadyAt,0);assert.equal(g.state.support,null);
+const wait=createCampaign({...l,waves:[['green'],['green']]});wait.start();wait.nextWave();step(wait,15);assert.equal(wait.state.support,null);if(wait.state.status==='running'){assert(wait.summon(wait.route.point(500)));wait.state.queue=[];wait.state.enemies=[];step(wait,1);const time=wait.state.time;assert.equal(wait.state.status,'planning');step(wait,60);assert.equal(wait.state.time,time)}
+// Two persistent cosmetic auras previously prevented the last enemy-free tick.
+const aura=createCampaign({...l,coins:200,allowed:[...l.allowed,'sentry'],waves:[['green']],layout:{...l.layout,pads:[{id:'a',x:0,y:0},{id:'b',x:100,y:0}]}});aura.start();aura.build('a','sentry');aura.build('b','sentry');aura.nextWave();step(aura,.05);aura.state.queue=[];aura.state.enemies=[];aura.state.effects=[{id:100,x:0,y:0,kind:'aura',color:'#fff',born:aura.state.time}];step(aura,.05);assert.equal(aura.state.status,'won');
+console.log('PASS exact 15 battle seconds / full 4.4 animation / no duplicate summon / pause / planning / reset / aura completion');
